@@ -1,4 +1,4 @@
-﻿$RemoveFirstPC=@("TND-STOF-112","TND-5EES-068")
+﻿$RemoveFirstPC=@()
 $HiCOSs_Path = "\\172.29.205.114\loginscript\Update\HiCOS"
 $Log_Path = "\\172.29.205.114\Public\sources\audit"
 $HiCOS_EXE = (Get-ChildItem -Path ($HiCOSs_Path+"\*.exe") | Where-Object{$_.VersionInfo.ProductName -eq "HiCOS PKI Smart Card"} | Sort-Object)
@@ -55,7 +55,7 @@ if($HiCOS_EXE_Path){
         }
     }
     if($HiCOS_installeds){
-        if($RemoveFirstPC.Contains($env:Computername)){
+        if($RemoveFirstPC.Contains($env:Computername) -or (($HiCOS_installeds|measure).count -ge 2)){
             foreach($item in $HiCOS_installeds){
                 $uninstall_Char = ($item.UninstallString -split "  ")
                 $LogFile= "$env:systemdrive\temp\"+$env:Computername + "_HiCOS_Uninstall_"+ $item.DisplayVersion + ".txt"
@@ -68,7 +68,7 @@ if($HiCOS_EXE_Path){
             $Log_Folder_Path = $Log_Path +"\"+ $HiCOS_EXE_ProductName
             $LogPattern =$env:Computername + "_HiCOS_*.txt"
             if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-            if(Test-Path -Path $LogFile){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern /XO /NJH /NJS /NDL /NC /NS}
+            if(Test-Path -Path $LogFile){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
         }
         if($NeedRestart){Restart-Computer -Force}
     }
@@ -76,10 +76,10 @@ if($HiCOS_EXE_Path){
     if([version]$HiCOS_installed.BundleVersion -ge [version]$HiCOS_EXE_ProductVersion){exit}
     $LogName = $env:Computername + "_HiCOS_"+ $HiCOS_EXE_ProductVersion + ".txt"
     $arguments = "/quiet /norestart /log $env:systemdrive\temp\$LogName"
-    robocopy $HiCOSs_Path "$env:systemdrive\temp" $HiCOS_EXE.Name /XO /NJH /NJS /NDL /NC /NS
+    robocopy $HiCOSs_Path "$env:systemdrive\temp" $HiCOS_EXE.Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
     start-process ($env:systemdrive+"\temp\"+$HiCOS_EXE.Name) -arg $arguments -wait -WindowStyle Hidden  
     $Log_Folder_Path = $Log_Path +"\"+ $HiCOS_EXE_ProductName
     $LogPattern =$env:Computername + "_HiCOS_*.txt"
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-    if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern /XO /NJH /NJS /NDL /NC /NS }
+    if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null }
 }
