@@ -55,7 +55,7 @@ if($HiCOS_EXE_Path){
         }
     }
     if($HiCOS_installeds){
-        if($RemoveFirstPC.Contains($env:Computername) -or (($HiCOS_installeds|measure).count -ge 2)){
+        if($RemoveFirstPC.Contains($env:Computername) -or (($HiCOS_installeds|Measure-Object).count -ge 2)){
             foreach($item in $HiCOS_installeds){
                 $uninstall_Char = ($item.UninstallString -split "  ")
                 $LogFile= "$env:systemdrive\temp\"+$env:Computername + "_HiCOS_Uninstall_"+ $item.DisplayVersion + ".txt"
@@ -81,5 +81,5 @@ if($HiCOS_EXE_Path){
     $Log_Folder_Path = $Log_Path +"\"+ $HiCOS_EXE_ProductName
     $LogPattern =$env:Computername + "_HiCOS_*.txt"
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-    if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null }
+    if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
 }
