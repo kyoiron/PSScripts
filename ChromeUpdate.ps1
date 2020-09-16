@@ -198,7 +198,7 @@ if($Chrome_MIS_FileMetaData){
     $Chrome_MSI_Version = [version]($Chrome_MIS_FileMetaData.註解 -split "Copyright")[0].trim()
     #if([version]$Chrome_installed.DisplayVersion -ge $Chrome_MSI_Version){exit}        
     $LogName = $env:Computername + "_"+ "Google Chrome" +"_"+ $Chrome_MSI_Version + ".txt"
-    $Chrome_MIS_fileName = $Chrome_MIS_FileMetaData.名稱
+    $Chrome_MIS_fileName = (Get-ChildItem -Path $Chrome_MIS_FileMetaData.File).Name
     $arguments = "/a $env:systemdrive\temp\$Chrome_MIS_fileName /quiet /norestart /log ""$env:systemdrive\temp\" +  $LogName+""""
     robocopy $Chrome_MSI_Folder "$env:systemdrive\temp" $Chrome_MIS_fileName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
     $Log_Folder_Path = $Log_Path +"\Google Chrome"
