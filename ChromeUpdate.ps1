@@ -196,7 +196,7 @@ if($Chrome_MIS_FileMetaData){
     $Chrome_installed = $Chrome_installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
     if(!$Chrome_installed){exit}
     $Chrome_MSI_Version = [version]($Chrome_MIS_FileMetaData.註解 -split "Copyright")[0].trim()
-    #if([version]$Chrome_installed.DisplayVersion -ge $Chrome_MSI_Version){exit}        
+    if([version]$Chrome_installed.DisplayVersion -ge $Chrome_MSI_Version){exit}        
     $LogName = $env:Computername + "_"+ "Google Chrome" +"_"+ $Chrome_MSI_Version + ".txt"
     $Chrome_MIS_fileName = (Get-ChildItem -Path $Chrome_MIS_FileMetaData.File).Name
     $arguments = "/a $env:systemdrive\temp\$Chrome_MIS_fileName /quiet /norestart /log ""$env:systemdrive\temp\" +  $LogName+""""
