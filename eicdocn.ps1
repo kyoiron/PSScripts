@@ -48,5 +48,8 @@ $eicdocnDLL_PC = Get-ChildItem -Path ($eic_PC_Path+"\eicdocn.dll")
     LastWriteTimeUtc  : 2020/1/31 上午 06:37:56
     Attributes        : Archive
 #>
-if([version]$eicdocnDLL_NAS.VersionInfo.ProductVersionRaw  -gt [version]$eicdocnDLL_PC.VersionInfo.ProductVersionRaw){Copy-Item -Path $eicdocnDLL_NAS -Destination $eic_PC_Path -Force}
+if([version]$eicdocnDLL_NAS.VersionInfo.ProductVersionRaw  -gt [version]$eicdocnDLL_PC.VersionInfo.ProductVersionRaw){
+    Get-Process | Where-Object {($_.ProcessName -eq "Comp") -and ($_.Path -eq "$env:SystemDrive\eic\adbook\Comp.exe")} | Stop-Process -Force -ErrorAction SilentlyContinue
+    Copy-Item -Path $eicdocnDLL_NAS -Destination $eic_PC_Path -Force
+}
 #if(Test-Path "$env:SystemDrive\temp\eicdocn@19.cab"){DISM /Online /Add-Package /PackagePath:"$env:SystemDrive\temp\eicdocn@19.cab"}

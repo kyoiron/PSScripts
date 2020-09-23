@@ -98,6 +98,7 @@ if($DocNcomp42_EXE -ne $null){
     $LogName = $env:Computername + "_"+$DocNcomp42_EXE.ProductName +"_"+$DocNcomp42_EXE.ProductVersion + ".txt"
     $arguments = "/quiet /norestart /log $env:systemdrive\temp\" +  $LogName
     robocopy $DocNcomp42s_Path "$env:systemdrive\temp" ""$DocNcomp42.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
+    Get-Process | Where-Object {($_.ProcessName -eq "Comp") -and ($_.Path -eq "$env:SystemDrive\eic\adbook\Comp.exe")} | Stop-Process -Force -ErrorAction SilentlyContinue
     start-process ($env:systemdrive+"\temp\"+$DocNcomp42.Name) -arg $arguments -wait
     $Log_Folder_Path = $Log_Path +"\"+ $DocNcomp42_EXE.ProductName
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
