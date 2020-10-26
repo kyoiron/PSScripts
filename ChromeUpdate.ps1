@@ -197,7 +197,7 @@ if($Chrome_MIS_FileMetaData){
         PSProvider          : Microsoft.PowerShell.Core\Registry
     #>
     $Chrome_installed = $Chrome_installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
-    if((!$Chrome_installed) -and (!$Install_IF_NOT_Installed)){exit}
+    if(($Chrome_installed -ne $null) -and ($Install_IF_NOT_Installed -eq $false)){exit}
     $Chrome_MSI_Version = [version]($Chrome_MIS_FileMetaData.註解 -split "Copyright")[0].trim()
     if([version]$Chrome_installed.DisplayVersion -ge $Chrome_MSI_Version){exit}        
     $LogName = $env:Computername + "_"+ "Google Chrome" +"_"+ $Chrome_MSI_Version + ".txt"
