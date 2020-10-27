@@ -190,6 +190,7 @@ if($MSP -and $AcroRead_MSI){
     }
     $arguments = "/a $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""
     robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name /XO /NJH /NJS /NDL /NC /NS
+    unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
     start-process "msiexec" -arg $arguments -Wait
     $Log_Folder_Path = $Log_Path +"\"+ $AcroRead_MSI.ProductName
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}

@@ -59,6 +59,7 @@ if($Javas_EXE_32.FullName){
         #有安裝狀況---只有安裝exe檔比已經安裝中最新的還要新再裝
         if([version]$Java_32_Lastest_installed.DisplayVersion -lt [version]$Javas_EXE_32_ProductVersion){
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_32.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
+            unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name)
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name) -arg $arguments -wait
             #在確認已安裝中最新的java版本
             foreach ($Path in $RegUninstallPaths) {
@@ -71,6 +72,7 @@ if($Javas_EXE_32.FullName){
     }else{
         #無安裝狀況
         robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_32.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
+        unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name)
         start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name) -arg $arguments -wait
         #在確認已安裝中最新的java版本
         foreach ($Path in $RegUninstallPaths) {
@@ -93,6 +95,7 @@ if($Javas_EXE_64.FullName){
         #有安裝狀況---只有安裝exe檔比已經安裝中最新的還要新再裝
         if([version]$Java_64_Lastest_installed.DisplayVersion -lt [version]$Javas_EXE_64_ProductVersion){
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_64.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
+            unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name)
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name) -arg $arguments -wait
             #在確認已安裝中最新的java版本
             $Java_64_installeds = Get-ItemProperty $RegUninstallPaths[0] | Where-Object{$_.DisplayName -match $Global:PatternJava64}          
@@ -101,6 +104,7 @@ if($Javas_EXE_64.FullName){
     }else{
         #無安裝狀況
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_64.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
+            unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name)
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name) -arg $arguments -wait
             #在確認已安裝中最新的java版本
             $Java_64_installeds = Get-ItemProperty $RegUninstallPaths[0] | Where-Object{$_.DisplayName -match $Global:PatternJava64}          

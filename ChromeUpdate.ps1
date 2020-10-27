@@ -89,7 +89,7 @@
 $Log_Path = "\\172.29.205.114\Public\sources\audit"
 #MSI檔安裝路徑
 $Chrome_MSI_Folder="\\172.29.205.114\loginscript\Update\Chrome"
-#沒裝的是否要裝$true或$no
+#沒裝的是否要裝$true或$false
 $Install_IF_NOT_Installed = $true
 if([System.Environment]::Is64BitOperatingSystem){
     $Chrome_MIS_FileMetaData = Get-FileMetaData -File ($Chrome_MSI_Folder+"\GoogleChromeStandaloneEnterprise64.msi") 
@@ -197,7 +197,7 @@ if($Chrome_MIS_FileMetaData){
         PSProvider          : Microsoft.PowerShell.Core\Registry
     #>
     $Chrome_installed = $Chrome_installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
-    if(($Chrome_installed -ne $null) -and ($Install_IF_NOT_Installed -eq $false)){exit}
+    if(($Chrome_installed -eq $null) -and ($Install_IF_NOT_Installed -ne $true)){exit}
     $Chrome_MSI_Version = [version]($Chrome_MIS_FileMetaData.註解 -split "Copyright")[0].trim()
     if([version]$Chrome_installed.DisplayVersion -ge $Chrome_MSI_Version){exit}        
     $LogName = $env:Computername + "_"+ "Google Chrome" +"_"+ $Chrome_MSI_Version + ".txt"
