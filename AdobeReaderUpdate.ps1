@@ -188,7 +188,7 @@ if($MSP -and $AcroRead_MSI){
         robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" "AcroRead.msi" "abcpy.ini" "Data1.cab" "setup.exe" "setup.ini"  /XO /NJH /NJS /NDL /NC /NS
         $AcroRead_MSI_Path = "$env:systemdrive\temp\AcroRead.msi"
     }
-    $arguments = "/a $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""
+    $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""
     robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name /XO /NJH /NJS /NDL /NC /NS
     unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
     start-process "msiexec" -arg $arguments -Wait
