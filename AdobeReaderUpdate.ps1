@@ -183,35 +183,46 @@ if($MSP -and $AcroRead_MSI){
         
     #>
     $AdobeReader_installed = $AdobeReader_installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
-    $MSP_Version_String = $MSP.BaseName.TrimStart("AcroRdrDCUpd")
-    $MSP_Version = $MSP_Version_String.Substring(0,2)+"."+ $MSP_Version_String.Substring(2,3)+"."+$MSP_Version_String.Substring(5,5)
-    if(([version]$AdobeReader_installed.DisplayVersion -ge [version]$MSP_Version) -and ($Install_IF_NOT_Installed -ne $true)){exit}
-    $LogName = $env:Computername + "_"+ $AcroRead_MSI.ProductName +"_"+ $MSP_Version + ".txt" 
-    $Log_Folder_Path = $Log_Path +"\"+ $AcroRead_MSI.ProductName   
-    if((Test-Path ($AdobeReader_installed.InstallSource+"AcroRead.msi")) -and ($AdobeReader_installed.VersionMajor -eq ([version]$MSP_Version).Major)){
-        $AcroRead_MSI_Path = $AdobeReader_installed.InstallSource+"AcroRead.msi"
+    if(($AdobeReader_installed -eq $null) -and ($Install_IF_NOT_Installed -ne $true)){exit}
+    if($AdobeReader_installed -ne $null){
+        $MSP_Version_String = $MSP.BaseName.TrimStart("AcroRdrDCUpd")
+        $MSP_Version = $MSP_Version_String.Substring(0,2)+"."+ $MSP_Version_String.Substring(2,3)+"."+$MSP_Version_String.Substring(5,5)
+        if([version]$AdobeReader_installed.DisplayVersion -ge [version]$MSP_Version){exit}
+        $LogName = $env:Computername + "_"+ $AcroRead_MSI.ProductName +"_"+ $MSP_Version + ".txt" 
+        $Log_Folder_Path = $Log_Path +"\"+ $AcroRead_MSI.ProductName   
+        if((Test-Path ($AdobeReader_installed.InstallSource+"AcroRead.msi")) -and ($AdobeReader_installed.VersionMajor -eq ([version]$MSP_Version).Major)){
+            $AcroRead_MSI_Path = $AdobeReader_installed.InstallSource+"AcroRead.msi"
+        }else{
+            robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" "AcroRead.msi" "abcpy.ini" "Data1.cab" "setup.exe" "setup.ini"  /XO /NJH /NJS /NDL /NC /NS
+            $AcroRead_MSI_Path = "$env:systemdrive\temp\AcroRead.msi"
+            $Setup_Content = Get-Content -Path "$env:systemdrive\temp\setup.ini"
+            if($Setup_Content -match 'PATCH=AcroRdrDCUpd') {
+                ($Setup_Content -replace ($Setup_Content -match 'PATCH=AcroRdrDCUpd') , ("PATCH="+ $MSP.Name) ) | Set-Content  "$env:systemdrive\temp\setup.ini"  
+            }
+        }
+        #Windows10才處理Win7暫時不管
+        if([environment]::OSVersion.Version -match '10'){
+        #小於現有主版本的安裝程式移除
+            if($AdobeReader_installed.VersionMajor -lt ([version]$MSP_Version).Major){
+                $Uninstall_LogName = $env:Computername + "_"+ $AdobeReader_installed.DisplayName +"_"+ $AdobeReader_installed.DisplayVersion+"_Remove" + ".txt"
+                $uninstall = $AdobeReader_installed.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
+                $uninstall = $uninstall.Trim()
+                #Write "Uninstalling..."
+                start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden
+                if(Test-Path -Path "$env:systemdrive\temp\$Uninstall_LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName /XO /NJH /NJS /NDL /NC /NS}
+            }
+        }
+        robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name /XO /NJH /NJS /NDL /NC /NS
+                
     }else{
         robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" "AcroRead.msi" "abcpy.ini" "Data1.cab" "setup.exe" "setup.ini"  /XO /NJH /NJS /NDL /NC /NS
         $AcroRead_MSI_Path = "$env:systemdrive\temp\AcroRead.msi"
         $Setup_Content = Get-Content -Path "$env:systemdrive\temp\setup.ini"
         if($Setup_Content -match 'PATCH=AcroRdrDCUpd') {
             ($Setup_Content -replace ($Setup_Content -match 'PATCH=AcroRdrDCUpd') , ("PATCH="+ $MSP.Name) ) | Set-Content  "$env:systemdrive\temp\setup.ini"  
-        }
-    }
-    #Windows10才處理Win7暫時不管
-    if([environment]::OSVersion.Version -match '10'){
-        #小於現有主版本的安裝程式移除
-        if($AdobeReader_installed.VersionMajor -lt ([version]$MSP_Version).Major){
-            $Uninstall_LogName = $env:Computername + "_"+ $AdobeReader_installed.DisplayName +"_"+ $AdobeReader_installed.DisplayVersion+"_Remove" + ".txt"
-            $uninstall = $AdobeReader_installed.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
-            $uninstall = $uninstall.Trim()
-            #Write "Uninstalling..."
-            start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden
-            if(Test-Path -Path "$env:systemdrive\temp\$Uninstall_LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName /XO /NJH /NJS /NDL /NC /NS}
-        }
-    }
-    $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""
-    robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name /XO /NJH /NJS /NDL /NC /NS
+        }        
+    }        
+    $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""    
     unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
     start-process "msiexec" -arg $arguments -Wait
     
