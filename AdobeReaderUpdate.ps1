@@ -186,7 +186,7 @@ if($MSP -and $AcroRead_MSI){
     if(($AdobeReader_installed -eq $null) -and ($Install_IF_NOT_Installed -ne $true)){exit}
     $LogName = $env:Computername + "_"+ $AcroRead_MSI.ProductName +"_"+ $MSP_Version + ".txt" 
     $Log_Folder_Path = $Log_Path +"\"+ $AcroRead_MSI.ProductName   
-
+    
     if($AdobeReader_installed -ne $null){
         $MSP_Version_String = $MSP.BaseName.TrimStart("AcroRdrDCUpd")
         $MSP_Version = $MSP_Version_String.Substring(0,2)+"."+ $MSP_Version_String.Substring(2,3)+"."+$MSP_Version_String.Substring(5,5)
@@ -213,9 +213,7 @@ if($MSP -and $AcroRead_MSI){
                 start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden
                 if(Test-Path -Path "$env:systemdrive\temp\$Uninstall_LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName /XO /NJH /NJS /NDL /NC /NS}
             }
-        }
-        robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name /XO /NJH /NJS /NDL /NC /NS
-                
+        }                        
     }else{
         robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" "AcroRead.msi" "abcpy.ini" "Data1.cab" "setup.exe" "setup.ini"  /XO /NJH /NJS /NDL /NC /NS
         $AcroRead_MSI_Path = "$env:systemdrive\temp\AcroRead.msi"
@@ -223,11 +221,11 @@ if($MSP -and $AcroRead_MSI){
         if($Setup_Content -match 'PATCH=AcroRdrDCUpd') {
             ($Setup_Content -replace ($Setup_Content -match 'PATCH=AcroRdrDCUpd') , ("PATCH="+ $MSP.Name) ) | Set-Content  "$env:systemdrive\temp\setup.ini"  
         }       
-    }        
+    }
+    robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name /XO /NJH /NJS /NDL /NC /NS        
     $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""    
     unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
-    start-process "msiexec" -arg $arguments -Wait
-    
+    start-process "msiexec" -arg $arguments -Wait    
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
     if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName /XO /NJH /NJS /NDL /NC /NS}
 }

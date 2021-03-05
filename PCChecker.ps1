@@ -34,8 +34,8 @@
         #郵件主旨
             $Subject = "個人電腦${env:computername}軟體安裝通知   " + (Get-Date -Format "yyy/MM/dd")
     #安裝軟體允許清單位址
-        #$SoftwareAllowList_Path="\\172.29.205.114\loginscript\PSScripts\SoftwareAllowList.txt"
-        $SoftwareAllowList_Path = "$env:SystemDrive\temp\SoftwareAllowList.txt"
+        $SoftwareAllowList_Path = "\\172.29.205.114\loginscript\PSScripts\SoftwareAllowList.txt"
+        #$SoftwareAllowList_Path = "$env:SystemDrive\temp\SoftwareAllowList.txt"
 
             
 #安裝軟體清查
@@ -64,18 +64,17 @@
     $NewInstallSoftwares = @()
     $NewInstallSoftwares = (Compare-Object -ReferenceObject $oldSoftwares -DifferenceObject $Softwares -Property DisplayName,DisplayVersion,Publisher,InstallDate  | Where-Object{$_.SideIndicator -eq '=>'} | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher,InstallDate )
     #Copy-Item  $SoftwareAllowList_Path -Destination $env:TEMP -Force
-    if(Test-Path $SoftwareAllowList_Path){ 
-        $SoftwareAllowList = Get-Content -Path $SoftwareAllowList_Path
+    if( $null -ne $WhilteList_Software_DisplayName){         
         $NotAllowSoftware = @()
         $NewInstallSoftwares | ForEach-Object{
-            foreach($item in $SoftwareAllowList){
+            foreach($item in $WhilteList_Software_DisplayName){
                 if(!($_.DisplayName -match $item)){
                     $NotAllowSoftware += $_
                     break
                 }
             }
         }
-        Remove-Item -Path $SoftwareAllowList_Path -Force
+        #Remove-Item -Path $SoftwareAllowList_Path -Force
     }
     
 #如果電腦有新安裝軟體，則將清單寄送管理者
