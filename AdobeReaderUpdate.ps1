@@ -184,12 +184,14 @@ if($MSP -and $AcroRead_MSI){
     #>
     $AdobeReader_installed = $AdobeReader_installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
     if(($AdobeReader_installed -eq $null) -and ($Install_IF_NOT_Installed -ne $true)){exit}
+    $LogName = $env:Computername + "_"+ $AcroRead_MSI.ProductName +"_"+ $MSP_Version + ".txt" 
+    $Log_Folder_Path = $Log_Path +"\"+ $AcroRead_MSI.ProductName   
+
     if($AdobeReader_installed -ne $null){
         $MSP_Version_String = $MSP.BaseName.TrimStart("AcroRdrDCUpd")
         $MSP_Version = $MSP_Version_String.Substring(0,2)+"."+ $MSP_Version_String.Substring(2,3)+"."+$MSP_Version_String.Substring(5,5)
         if([version]$AdobeReader_installed.DisplayVersion -ge [version]$MSP_Version){exit}
-        $LogName = $env:Computername + "_"+ $AcroRead_MSI.ProductName +"_"+ $MSP_Version + ".txt" 
-        $Log_Folder_Path = $Log_Path +"\"+ $AcroRead_MSI.ProductName   
+        
         if((Test-Path ($AdobeReader_installed.InstallSource+"AcroRead.msi")) -and ($AdobeReader_installed.VersionMajor -eq ([version]$MSP_Version).Major)){
             $AcroRead_MSI_Path = $AdobeReader_installed.InstallSource+"AcroRead.msi"
         }else{
@@ -220,7 +222,7 @@ if($MSP -and $AcroRead_MSI){
         $Setup_Content = Get-Content -Path "$env:systemdrive\temp\setup.ini"
         if($Setup_Content -match 'PATCH=AcroRdrDCUpd') {
             ($Setup_Content -replace ($Setup_Content -match 'PATCH=AcroRdrDCUpd') , ("PATCH="+ $MSP.Name) ) | Set-Content  "$env:systemdrive\temp\setup.ini"  
-        }        
+        }       
     }        
     $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""    
     unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
