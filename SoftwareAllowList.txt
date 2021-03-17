@@ -1,0 +1,18 @@
+Microsoft Office 32-bit Components 2016
+Microsoft Office Professional Plus 2016
+Google Chrome
+Adobe Acrobat Reader DC - Chinese Traditional
+Adobe Refresh Manager
+Adobe Connect
+JrsysSecurityTool
+Java 8 Update
+Java Auto Updater
+Microsoft Visual C++ 2013 Redistributable (x64)
+Microsoft Visual C++ 2013 Redistributable (x86)
+Microsoft Visual C++ 2013 x64 Additional Runtime
+Microsoft Visual C++ 2013 x64 Minimum Runtime
+Microsoft Visual C++ 2013 x86 Additional Runtime
+Microsoft Visual C++ 2013 x86 Minimum Runtime 
+File Zilla Client
+SmartPKI 多憑證安控模組
+獄政資訊系統

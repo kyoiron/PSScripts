@@ -65,8 +65,9 @@
     $NewInstallSoftwares = (Compare-Object -ReferenceObject $oldSoftwares -DifferenceObject $Softwares -Property DisplayName,DisplayVersion,Publisher,InstallDate  | Where-Object{$_.SideIndicator -eq '=>'} | Sort-Object DisplayName | Select-Object DisplayName,DisplayVersion,Publisher,InstallDate )
     #Copy-Item  $SoftwareAllowList_Path -Destination $env:TEMP -Force
     if( $null -ne $WhilteList_Software_DisplayName){         
+        <#
         $NotAllowSoftware = @()
-        $NewInstallSoftwares | ForEach-Object{
+        $NewInstallSoftwares | Where-Object{
             foreach($item in $WhilteList_Software_DisplayName){
                 if(!($_.DisplayName -match $item)){
                     $NotAllowSoftware += $_
@@ -75,6 +76,10 @@
             }
         }
         #Remove-Item -Path $SoftwareAllowList_Path -Force
+        #>
+        $NotAllowSoftware = @()
+        $NotAllowSoftware = $NewInstallSoftwares|Where-Object{$WhilteList_Software_DisplayName -notcontains $_.displayName}
+
     }
     
 #如果電腦有新安裝軟體，則將清單寄送管理者
@@ -103,7 +108,7 @@
     $SystemManufacturer = $Pc_Info.Manufacturer.trim()
     $SystemModel = $Pc_Info.Model.trim()
     $Memory = [math]::Round($Pc_Info.TotalPhysicalMemory/1GB)
-    $MAC = (get-wmiobject -class "Win32_NetworkAdapterConfiguration" |Where{$_.IpEnabled -Match "True"}|select MACAddress)[0].MACAddress -replace ":","-"
+    $MAC = (get-wmiobject -class "Win32_NetworkAdapterConfiguration" |Where-Object{$_.IpEnabled -Match "True"}|Select-Object MACAddress)[0].MACAddress -replace ":","-"
     $IP  = [System.Net.Dns]::GetHostByName($env:COMPUTERNAME).AddressList[0].IpAddressToString
 #連接資料庫
     $SqlConnection = New-Object System.Data.ODBC.ODBCConnection
@@ -134,7 +139,7 @@
         #$QuerySelect = 'SELECT `ComputerName`, `OS`, `SystemManufacturer`, `SystemModel`, `Memory`, `IP`, `MAC`, `PropertyNo`, `User`, `Keeper`, `Unit` FROM `PC_Info` WHERE `ComputerName` = ''' + $ComputerName +''''
         #$QuerySelect = 'SELECT * FROM `PC_Info`'
     $Insert_PC_Info = 'INSERT INTO `PC_Info`(`ComputerName`, `OS`, `SystemManufacturer`, `SystemModel`, `Memory`, `IP`, `MAC`, `PropertyNo`, `User`, `Keeper`, `Unit`) VALUES ("'+$ComputerName+'","'+ $OS+'","'+$SystemManufacturer+'","'+$SystemModel+'","'+$Memory+'","'+$IP+'","'+$MAC+'","","","","") ' + " ON DUPLICATE KEY UPDATE `OS`=VALUES(`OS`) ,`SystemManufacturer`=VALUES(`SystemManufacturer`) ,`SystemModel`=VALUES(`SystemModel`),`Memory`=VALUES(`Memory`),`IP`=VALUES(`IP`),`MAC`=VALUES(`MAC`)"
-    $DataTable = New-Object -TypeName System.Data.DataTable
+    #$DataTable = New-Object -TypeName System.Data.DataTable
     $command = $SqlConnection.CreateCommand()
     $command.CommandText = $Insert_PC_Info
     $results = $command.ExecuteReader()
