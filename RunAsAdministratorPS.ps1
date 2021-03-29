@@ -10,3 +10,5 @@ powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
 powershell "$env:SystemDrive\temp\ThreatSonarPC.ps1"
 #PC基本資料蒐集
 powershell "$env:SystemDrive\temp\PCChecker.ps1" 
+#刪除不要的軟體
+powershell "$env:SystemDrive\temp\UninstallSoftware.ps1" 

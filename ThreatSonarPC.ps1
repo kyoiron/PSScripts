@@ -1,4 +1,4 @@
-﻿$SpecificPC=@("TND-GEOF-131","TND-GEOF-132","TND-SASE-089","TND-SASE-107","TND-GASE-023","TND-PEOF-029","TND-PEOF-030","TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-STOF-112")
+﻿$SpecificPC=@("TND-GEOF-131","TND-SASE-089","TND-SASE-107","TND-GASE-023","TND-PEOF-029","TND-PEOF-030","TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-STOF-112","TND-STOF-117")
 if($SpecificPC.Contains($env:computername)){
     $Name="台南看守所"
     $ThreatSonar_Path = "$env:SystemDrive\ThreatSonar"

@@ -124,12 +124,15 @@ if($GeasBatchsign_Newest_MSI){
         PSProvider          : Microsoft.PowerShell.Core\Registry
     #>
     $GeasBatchsign_installed = $GeasBatchsign_installeds| Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
-    if([version]$GeasBatchsign_installed.DisplayVersion -ge [version]$GeasBatchsign_Newest_MSI.ProductVersion){exit}
-     $LogName = $env:Computername + "_"+$GeasBatchsign_Newest_MSI.ProductName +"_"+$GeasBatchsign_Newest_MSI.ProductVersion + ".txt"
-     $arguments = "/quiet /norestart /log $env:systemdrive\temp\" +  $LogName
-     robocopy $GeasBatchsigns_Path "$env:systemdrive\temp" (Get-ChildItem -Path $GeasBatchsign_Newest_MSI.File).Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
-     $Log_Folder_Path = $Log_Path + "\"+ $GeasBatchsign_Newest_MSI.ProductName
-     $LogPattern = $env:Computername + "_"+ $GeasBatchsign_Newest_MSI.ProductName +"_*.txt"
-     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-     if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+    #if([version]$GeasBatchsign_installed.DisplayVersion -ge [version]$GeasBatchsign_Newest_MSI.ProductVersion){exit}
+    #有安裝，就直接離開。因為有裝2版仍可正常運作，如果裝3版則無法判斷次版本新舊，所以沒裝的再裝即可。
+    if($null -ne $GeasBatchsign_installed){exit}
+    $LogName = $env:Computername + "_"+$GeasBatchsign_Newest_MSI.ProductName +"_"+$GeasBatchsign_Newest_MSI.ProductVersion + ".txt"
+    $GeasBatchsign_MIS_fileName = (Get-Item $GeasBatchsign_Newest_MSI.File).Name 
+    $arguments = "/i $env:systemdrive\temp\$GeasBatchsign_MIS_fileName  /qn /log ""$env:systemdrive\temp\" +  $LogName+""""
+    robocopy $GeasBatchsigns_Path "$env:systemdrive\temp" (Get-ChildItem -Path $GeasBatchsign_Newest_MSI.File).Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+    start-process "msiexec" -arg $arguments -Wait
+    $Log_Folder_Path = $Log_Path + "\"+ $GeasBatchsign_Newest_MSI.ProductName
+    if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
+    if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
 }
