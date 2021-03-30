@@ -37,7 +37,7 @@ if($null -ne $BlackList_Software_DisplayName){
                 $uninstall = $_.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
                 $uninstall = $uninstall.Trim()                
                 start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden                                                                 
-            }elseif($_.UninstallString -notmatch "/MS" ){
+            }elseif($_.UninstallString -notmatch "/S" ){
                 $uninstall = $_.UninstallString.Trim()             
                 start-process -FilePath $uninstall -ArgumentList " /S"  -Wait -WindowStyle Hidden 
                 "加入參數/S，嘗試移除：" + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"  
