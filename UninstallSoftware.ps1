@@ -17,7 +17,7 @@ $BlackList_Software_DisplayName = Get-Content -Path $SoftwareDisallowList_Path
 
 if($null -ne $BlackList_Software_DisplayName){
     $UninstallSoftwares = @()
-    $UninstallSoftwares = $Softwares | Where-Object {$BlackList_Software_DisplayName -contains $_.displayName}
+    $UninstallSoftwares = $Softwares | Where-Object {$_.displayName | Select-String $BlackList_Software_DisplayName }    
     $UninstallSoftwares | Where-Object{
         if($null -ne $_.QuietUninstallString){
             $QuietUninstallString = $_.QuietUninstallString
@@ -37,11 +37,35 @@ if($null -ne $BlackList_Software_DisplayName){
                 $uninstall = $_.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
                 $uninstall = $uninstall.Trim()                
                 start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden                                                                 
-            }else{
+            }elseif($_.UninstallString -notmatch "/MS" ){
+                $uninstall = $_.UninstallString.Trim()             
+                start-process -FilePath $uninstall -ArgumentList " /S"  -Wait -WindowStyle Hidden 
+                "加入參數/S，嘗試移除：" + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"  
+            }
+            else{
                 
                 "無靜默安裝功能，無法移除軟體：" + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"
             } 
             if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName /XO /NJH /NJS /NDL /NC /NS}          
         }
     }
+    New-PSDrive -Name HKU -PSProvider Registry -Root Registry::HKEY_USERS | Out-Null
+    $Softwares_AfterRomve = @()
+    foreach($Path in $RegUninstallPaths){        
+        $Softwares_AfterRomve += (Get-ItemProperty $Path | Select-Object DisplayName, DisplayVersion, Publisher, InstallDate , PSPath , QuietUninstallString , UninstallString , UninstallString_Hidden)
+    }
+    Remove-PSDrive -Name HKU
+    $UninstallSoftwares_Check = @()
+    $UninstallSoftwares_Check = $Softwares_AfterRomve| Where-Object {$_.displayName | Select-String $BlackList_Software_DisplayName }
+    $Log_Folder_Path =  $Log_Path +"\"+ "DisallowList_ALLClear"
+    $Uninstall_LogName  = $env:Computername + "_DisallowList_ALLClear_Remove" + ".txt"
+    if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force} 
+    if($null -eq $UninstallSoftwares_Check){        
+        "成功移除所有黑名單軟體"  + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"
+    }else{       
+        $Log_Folder_Path =  $Log_Path +"\"+ $_.DisplayName
+        $Uninstall_LogName = $env:Computername + "_"+ $_.DisplayName +"_Remove" + ".txt"         
+        $UninstallSoftwares_Check | Where-Object{ "尚未移除：" + $_.DisplayName+"軟體" | Out-File  ("$env:systemdrive\temp\"+ $env:Computername + "_"+ $_.DisplayName +"_Remove" + ".txt")}       
+    }
+    if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName /XO /NJH /NJS /NDL /NC /NS}    
 }

@@ -1,5 +1,9 @@
-﻿$SpecificPC=@("TND-GEOF-131","TND-SASE-089","TND-SASE-107","TND-GASE-023","TND-PEOF-029","TND-PEOF-030","TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-STOF-112","TND-STOF-117")
+﻿#要安裝的電腦名稱
+$SpecificPC=@("TND-GEOF-131","TND-SASE-089","TND-SASE-107","TND-GASE-023","TND-PEOF-029","TND-PEOF-030","TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-STOF-112","TND-STOF-117")
+#LOG檔存放路徑
+$Log_Folder_Path = "\\172.29.205.114\Public\sources\audit\ThreatSonarPC"
 if($SpecificPC.Contains($env:computername)){
+    #機關名稱，請參考網址：http://download.moj/files/工具檔案/T5/所屬PC/
     $Name="台南看守所"
     $ThreatSonar_Path = "$env:SystemDrive\ThreatSonar"
     $ThreatSonar_exe = "$ThreatSonar_Path\ThreatSonar_073.exe"
@@ -21,4 +25,5 @@ if($SpecificPC.Contains($env:computername)){
         $ThreatSonarExe_Check = "$ThreatSonar_exe 檔案不存在"
     }    
     (get-date).ToString() + "`r`n$ScheduledTask_Check`r`n$ThreatSonarExe_Check`r`n" | Out-File -FilePath "$env:SystemDrive\temp\${env:COMPUTERNAME}_ThreatSonar_Check.txt"
+    if(Test-Path -Path "$env:SystemDrive\temp\${env:COMPUTERNAME}_ThreatSonar_Check.txt" ){robocopy "$env:systemdrive\temp" $Log_Folder_Path "${env:COMPUTERNAME}_ThreatSonar_Check.txt" /XO /NJH /NJS /NDL /NC /NS}
 }
