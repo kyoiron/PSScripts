@@ -1,5 +1,5 @@
 ﻿#要安裝的電腦名稱
-$SpecificPC=@("TND-GEOF-131","TND-SASE-089","TND-SASE-107","TND-GASE-023","TND-PEOF-029","TND-PEOF-030","TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-STOF-112","TND-STOF-117")
+$SpecificPC=@("TND-GEOF-131","TND-SASE-089","TND-SASE-107","TND-GASE-023","TND-PEOF-029","TND-PEOF-030","TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-STOF-112","TND-SEOF-062")
 #LOG檔存放路徑
 $Log_Folder_Path = "\\172.29.205.114\Public\sources\audit\ThreatSonarPC"
 if($SpecificPC.Contains($env:computername)){

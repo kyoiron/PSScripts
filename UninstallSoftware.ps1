@@ -14,7 +14,6 @@ foreach($Path in $RegUninstallPaths){
 Remove-PSDrive -Name HKU
 
 $BlackList_Software_DisplayName = Get-Content -Path $SoftwareDisallowList_Path
-
 if($null -ne $BlackList_Software_DisplayName){
     $UninstallSoftwares = @()
     $UninstallSoftwares = $Softwares | Where-Object {$_.displayName | Select-String $BlackList_Software_DisplayName }    
@@ -67,5 +66,5 @@ if($null -ne $BlackList_Software_DisplayName){
         $Uninstall_LogName = $env:Computername + "_"+ $_.DisplayName +"_Remove" + ".txt"         
         $UninstallSoftwares_Check | Where-Object{ "©|•º≤æ∞£°G" + $_.DisplayName+"≥n≈È" | Out-File  ("$env:systemdrive\temp\"+ $env:Computername + "_"+ $_.DisplayName +"_Remove" + ".txt")}       
     }
-    if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName /XO /NJH /NJS /NDL /NC /NS}    
+    if(Test-Path -Path "$env:systemdrive\temp\$Uninstall_LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName /XO /NJH /NJS /NDL /NC /NS}    
 }

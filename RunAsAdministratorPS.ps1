@@ -12,9 +12,11 @@ powershell "$env:SystemDrive\temp\ThreatSonarPC.ps1"
 powershell "$env:SystemDrive\temp\PCChecker.ps1" 
 #刪除不要的軟體
 powershell "$env:SystemDrive\temp\UninstallSoftware.ps1" 
-
+<#
 #修復Windows10 列印出現「藍白畫面」或無法完全列印。
 #參考連結https://3c.ltn.com.tw/news/43558
 if([environment]::OSVersion.Version.Major -like "10"){    
     powershell "$env:SystemDrive\temp\RepairWin32kfull.ps1" 
 }
+#>
+#Get-ChildItem -Path C:\Temp -Include * -Recurse -Force | foreach { $_.Delete()}
