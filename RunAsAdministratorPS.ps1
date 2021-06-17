@@ -42,8 +42,6 @@ if($DormPC.Contains($env:computername)){
 #>
 #Get-ChildItem -Path C:\Temp -Include * -Recurse -Force | foreach { $_.Delete()}
 
-$PCinspection_PCs = @("TND-STOF-113")
-
 if((Get-ScheduledTaskInfo -TaskName "PCinspection" -ErrorAction Ignore).LastTaskResult -ne 0){
     #年份
     $year = "110"
