@@ -206,7 +206,7 @@ if($MSP -and $AcroRead_MSI){
         #Windows10才處理Win7暫時不管
         if([environment]::OSVersion.Version -match '10'){
         #小於現有主版本的安裝程式移除
-            if($AdobeReader_installed.VersionMajor -lt ([version]$MSP_Version).Major){
+            if(($AdobeReader_installed.VersionMajor -lt ([version]$MSP_Version).Major) <#-or {$env:Computername -like "TND-1EES-082"}#>){
                 $Uninstall_LogName = $env:Computername + "_"+ $AdobeReader_installed.DisplayName +"_"+ $AdobeReader_installed.DisplayVersion+"_Remove" + ".txt"
                 $uninstall = $AdobeReader_installed.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
                 $uninstall = $uninstall.Trim()

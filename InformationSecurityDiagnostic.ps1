@@ -2,7 +2,7 @@
 $Year = '108'
 $PcFolder = $env:SystemDrive + "\temp\"
 $PcIsdFolder = $PcFolder  + "3D36C52EB2"
-$NetworkFolder = "\\172.29.205.114\Public\sources\audit\InformationSecurityDiagnostic"
+$NetworkFolder = "\\172.29.205.114\Public\sources\audit\PCinspection"
 $Logfile = $NetworkFolder + "\" + $Year + "\" + $env:computername + ".txt"
 
 #拷貝資安健檢執行檔
@@ -25,7 +25,8 @@ do{
     Start-Sleep -Seconds 60
     $Threat_Sonar = Get-WmiObject Win32_Process | Where-Object{$_.name -eq 'Threat_Sonar.exe'}
     $edcprobeagent = Get-WmiObject Win32_Process | Where-Object{$_.name -eq 'edcprobeagent.exe'}
-    $GPOAction = Get-WmiObject Win32_Process | Where-Object{$_.name -eq 'GPOAction.exe'}    
+    $GPOAction = Get-WmiObject Win32_Process | Where-Object{$_.name -eq 'GPOAction.exe'}
+
 }while(($Threat_Sonar) -or ($edcprobeagent) -or ($GPOAction))
 
 #檢查資料夾是否為空，空則成功；否則
