@@ -61,6 +61,8 @@ if((Get-ScheduledTaskInfo -TaskName "PCinspection" -ErrorAction Ignore).LastTask
     (((((Get-Content -Path "${env:SystemDrive}\temp\PCinspectionTemplate.xml") ) -replace '%DATEandTIME%' , $DATEandTIME) -replace '%PCInspection_exeNASPath%', $PCInspection_exeNASPath) -replace "%Log_Folder_Path%",$Log_Folder_Path) -replace "%YEAR%",$year | Set-Content -Path "${env:SystemDrive}\temp\PCinspection.xml" -Force    
     if((Get-ScheduledTask -TaskName "PCInspection") -ne $null){Unregister-ScheduledTask -TaskName "PCInspection" -Confirm:$false }
     $schtasksOutput = schtasks.exe /create /RU "NT AUTHORITY\SYSTEM" /TN "PCInspection" /XML "${env:SystemDrive}\temp\PCinspection.xml" /F
+    if(Test-Path -Path ($env:SystemDrive+"\temp\"+$env:computername+'_Result_Success' + ".txt")){robocopy ($env:SystemDrive+"\temp") ($Log_Folder_Path+"\$year") ($env:computername+'_Result_Success' + ".txt") "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
+    if(Test-Path -Path ($env:SystemDrive+"\temp\"+$env:computername+'_Result_Fail' + ".txt")){robocopy ($env:SystemDrive+"\temp") ($Log_Folder_Path+"\$year") ($env:computername+'_Result_Fail' + ".txt") "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
     #write-host $schtasksOutput
     #powershell "$env:SystemDrive\temp\PCinspection.ps1"
 }

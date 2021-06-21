@@ -1,7 +1,9 @@
 #設定變數
 $Year = '110'
 $PCInspection_exeNASPath="\\172.29.205.114\loginscript\Update\PCinspection"
-$PcFolder=$env:SystemDrive+"\temp";$CheckFolder='3D36C52EB2';$CheckFolder_Path=$PcFolder+'\'+$CheckFolder;
+$PcFolder=$env:SystemDrive+"\temp"
+$CheckFolder='3D36C52EB2'
+$CheckFolder_Path=$PcFolder+'\'+$CheckFolder
 $Log_Folder_Path = "\\172.29.205.114\Public\sources\audit\PCinspection"+"\"+"$Year"
 #$Logfile = $NetworkFolder + "\" + $Year + "\" + $env:computername+'_Result' + ".txt"
 $PCInspection_exePath = $PcFolder+'\'+"pc.exe"
@@ -34,5 +36,14 @@ if(Test-Path($PCInspection_exePath)){
         "3D36C52EB2資料夾不為空，可能檢測未成功" | Out-File -FilePath ($PcFolder+"\"+$Logfile)
     }
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-    robocopy $PcFolder ($Log_Folder_Path+"\"+$Year) $Logfile "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+    
+    if($directoryInfo.count -eq 0){
+        $Logfile=$Log_Folder_Path+"\"+$env:computername+'_Result_Success'+".txt"
+        "get-date" | Out-File -FilePath $Logfile
+    }else{
+        $Logfile=$Log_Folder_Path +"\"+ $env:computername+'_Result_Fail'+".txt"
+        "3D36C52EB2資料夾不為空，可能檢測未成功" | Out-File -FilePath $Logfile
+    }
+    robocopy $PcFolder $Log_Folder_Path $Logfile "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+
 }
