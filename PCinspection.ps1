@@ -10,7 +10,7 @@ $PCInspection_exePath = $PcFolder+'\'+"pc.exe"
 
 #執行前刪除資料夾
 if (Test-Path $CheckFolder_Path){Remove-Item -LiteralPath $CheckFolder_Path -Force -Recurse}
-robocopy $PCInspection_exeNASPath "pc.exe" "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+robocopy $PCInspection_exeNASPath $PcFolder "pc.exe" "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
 if(Test-Path($PCInspection_exePath)){
     #執行資安健檢檔start-job  
     $ISDJob = Start-Job -ScriptBlock { 
@@ -27,8 +27,8 @@ if(Test-Path($PCInspection_exePath)){
     }while(($Threat_Sonar) -or ($edcprobeagent) -or ($DSWAgent))
     
     #檢查資料夾是否為空，空則成功；否則
-    $directoryInfo = Get-ChildItem $CheckFolder_Path  -ErrorAction SilentlyContinue | Measure-Object
-    if((Test-Path -path $CheckFolder_Path) -and ($directoryInfo.count -eq 0)){
+    #$directoryInfo = Get-ChildItem $CheckFolder_Path  -ErrorAction SilentlyContinue | Measure-Object
+    if((Test-Path -path $CheckFolder_Path -ErrorAction SilentlyContinue)){
         $Logfile =  $env:computername+'_Result_Success' + ".txt"
         (get-date).ToString() + " 檢查3D36C52EB2資料夾為空"| Out-File -FilePath ($PcFolder+"\"+$Logfile)
     }else{
@@ -36,14 +36,5 @@ if(Test-Path($PCInspection_exePath)){
         "3D36C52EB2資料夾不為空，可能檢測未成功" | Out-File -FilePath ($PcFolder+"\"+$Logfile)
     }
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-    
-    if($directoryInfo.count -eq 0){
-        $Logfile=$Log_Folder_Path+"\"+$env:computername+'_Result_Success'+".txt"
-        "get-date" | Out-File -FilePath $Logfile
-    }else{
-        $Logfile=$Log_Folder_Path +"\"+ $env:computername+'_Result_Fail'+".txt"
-        "3D36C52EB2資料夾不為空，可能檢測未成功" | Out-File -FilePath $Logfile
-    }
     robocopy $PcFolder $Log_Folder_Path $Logfile "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
-
 }
