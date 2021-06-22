@@ -48,7 +48,7 @@ if((Get-ScheduledTaskInfo -TaskName "PCinspection" -ErrorAction Ignore).LastTask
     #pc.exe存放位置
     $PCInspection_exeNASPath="\\172.29.205.114\loginscript\Update\PCinspection"
     #log存放位置
-    $Log_Folder_Path = "\\172.29.205.114\Public\sources\audit\PCinspection"
+    $Log_Folder_Path = "\\172.29.205.114\Public\sources\audit\PCinspection" + '\' + $year
 
     #指訂排程執行的時與分（24H制）
     $SpecificTime = '12:10'
