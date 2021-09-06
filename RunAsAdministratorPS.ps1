@@ -92,6 +92,18 @@ if((Get-ScheduledTaskInfo -TaskName "PCinspection" -ErrorAction Ignore).LastTask
     #write-host $schtasksOutput
     #powershell "$env:SystemDrive\temp\PCinspection.ps1"
 }
+
+#$Rebuid_EICSignTSR_PC=@("TND-BUSE-072")
+$Rebuid_EICSignTSR_PC=@()
+if($Rebuid_EICSignTSR_PC.Contains($env:computername)){   
+    get-item -Path "$env:PUBLIC\EICSignTSR\EicSignTSR.ini"
+    Stop-Process -Name EicSignTSR -Force -ErrorAction Continue
+    Remove-Item -Path "$env:PUBLIC\EICSignTSR\EicSignTSR.ini" -Force
+    Start-Process "$env:SystemDrive\eic\EICSignTSR\EicSignTSR.exe"
+    Start-Sleep -s 3 
+    Stop-Process -Name EicSignTSR -Force 
+}
+
 #安裝差勤上傳程式
 <#
 #差勤上傳機器電腦名稱"TND-PEOF-015"
@@ -105,3 +117,11 @@ if($env:computername -eq "TND-PEOF-015"){
 #印表機權限
 $Temp_PermissionSDDL="G:SYD:(A;;LCSWSDRCWDWO;;;WD)(A;OIIO;RPWPSDRCWDWO;;;WD)(A;;SWRC;;;AC)(A;CIIO;RC;;;AC)(A;OIIO;RPWPSDRCWDWO;;;AC)(A;;LCSWSDRCWDWO;;;CO)(A;OIIO;RPWPSDRCWDWO;;;CO)(A;OIIO;RPWPSDRCWDWO;;;BA)(A;;LCSWSDRCWDWO;;;BA)"
 Get-printer | ForEach-Object{ Set-Printer $_.Name -PermissionSDDL $Temp_PermissionSDDL}
+
+
+
+#安裝財產申報系統-所長、副所長、會計主任、政風主任、總務科長
+$Pdis_PC=@("TND-HEAD-150","TND-DEPUTY-014","TND-ACOF-060","TND-GEOF-131","TND-GASE-041")
+if($Pdis_PC.Contains($env:computername)){
+    powershell  "$env:SystemDrive\temp\Pdis.ps1"
+}
