@@ -18,7 +18,7 @@ if(Test-Path($pdis_installeds.InstallLocation + "Ins_Apply.ver")){
 }
 if(($pdis_web_version -gt $pdis_installed_Version)-or(!$pdis_installed)){
         $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-        Invoke-WebRequest -UseBasicParsing -Uri "https://pdis.moj.gov.tw/version/pdis_v1658.exe" -WebSession $session  -OutFile "$env:systemdrive\temp\$pdis_web_EXE"    
+        Invoke-WebRequest -UseBasicParsing -Uri ("https://pdis.moj.gov.tw/version/"+$pdis_web_EXE) -WebSession $session  -OutFile "$env:systemdrive\temp\$pdis_web_EXE"    
         #robocopy $pdis_EXE_Path "$env:systemdrive\temp" ""$pdis_EXE.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
         unblock-file ($env:systemdrive+"\temp\"+ $pdis_web_EXE)
         $pdis_EXE = Get-ItemProperty -Path ($env:systemdrive+"\temp\"+ $pdis_web_EXE)
