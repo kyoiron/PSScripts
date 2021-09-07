@@ -4,7 +4,8 @@ $RegUninstallPaths = @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstal
 #$pdis_EXE = Get-ChildItem -Path ($pdis_EXE_Path+"\pdis_*.exe") | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1
 #$pdis_EXE_Version =  $pdis_EXE.BaseName.TrimStart("pdis_v")
 $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-$Web_pdis = Invoke-WebRequest -UseBasicParsing -Uri "https://pdis.moj.gov.tw/U100/U101-1.aspx" -WebSession $session
+$Pdis_url = "https://pdis.moj.gov.tw"
+$Web_pdis = Invoke-WebRequest -UseBasicParsing -Uri $Pdis_url -WebSession $session
 $pdis_web_EXE = ($Web_pdis.Links.FindById('ctl00_ContentPlaceHolder1_HyperLink_EXE').href).trimstart("../version/")
 $pdis_web_version = [int]$pdis_web_EXE.TrimStart("pdis_v").TrimEnd(".exe")
 
@@ -13,12 +14,12 @@ foreach ($Path in $RegUninstallPaths) {
         $pdis_installed = Get-ItemProperty $Path | Where-Object{$_.DisplayName -match "公職人員財產申報系統"} 
     }
 }
-if(Test-Path($pdis_installeds.InstallLocation + "Ins_Apply.ver")){
-    $pdis_installed_Version = [int]((Get-Content ($pdis_installeds.InstallLocation + "Ins_Apply.ver") -ErrorAction Continue).TrimStart("v") )      
+if(Test-Path($pdis_installed.InstallLocation + "Ins_Apply.ver")){
+    $pdis_installed_Version = [int]((Get-Content ($pdis_installed.InstallLocation + "Ins_Apply.ver") -ErrorAction Continue).TrimStart("v") )      
 }
 if(($pdis_web_version -gt $pdis_installed_Version)-or(!$pdis_installed)){
         $session = New-Object Microsoft.PowerShell.Commands.WebRequestSession
-        Invoke-WebRequest -UseBasicParsing -Uri ("https://pdis.moj.gov.tw/version/"+$pdis_web_EXE) -WebSession $session  -OutFile "$env:systemdrive\temp\$pdis_web_EXE"    
+        Invoke-WebRequest -UseBasicParsing -Uri ($Pdis_url + $Web_pdis.Links.FindById('ctl00_ContentPlaceHolder1_HyperLink_EXE').href.TrimStart("..")) -WebSession $session  -OutFile "$env:systemdrive\temp\$pdis_web_EXE"    
         #robocopy $pdis_EXE_Path "$env:systemdrive\temp" ""$pdis_EXE.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
         unblock-file ($env:systemdrive+"\temp\"+ $pdis_web_EXE)
         $pdis_EXE = Get-ItemProperty -Path ($env:systemdrive+"\temp\"+ $pdis_web_EXE)
@@ -31,12 +32,12 @@ if(($pdis_web_version -gt $pdis_installed_Version)-or(!$pdis_installed)){
         }while( !(Get-Content -Path "$env:systemdrive\temp\$LogName" | Where-Object {$_.Contains("Log closed.")}) )
         #設定捷徑
         if(!(test-path -path "$env:PUBLIC\Desktop\公職人員財產申報.lnk")){
-           robocopy "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\公職人員財產申報系統" "$env:PUBLIC\Desktop" "公職人員財產申報.lnk" /XO /NJH /NJS /NDL /NC /NS
+           robocopy "$env:ProgramData\Microsoft\Windows\Start Menu\Programs\公職人員財產申報系統" "$env:PUBLIC\Desktop" "公職人員財產申報.lnk" "/XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
         }
         #回傳安裝LOG檔
         $Log_Folder_Path = $Log_Path +"\"+ "pdis"
         if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-        if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName /XO /NJH /NJS /NDL /NC /NS }
+        if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null }
 }    
 <#
 if($pdis_EXE.FullName){
