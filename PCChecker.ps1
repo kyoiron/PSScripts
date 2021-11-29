@@ -21,7 +21,7 @@
         #$WhilteList_Software_DisplayName=@("")
     #Email參數
         $From = "${env:computername}<tndi@mail.moj.gov.tw>"
-        $To = "kyoiron@mail.moj.gov.tw"
+        $To = "tndi@mail.moj.gov.tw"
         #寄送副本，指令存參
             #$Cc = "AThirdUser@somewhere.com"
         #夾帶附件，指令存參

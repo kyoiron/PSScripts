@@ -2,7 +2,13 @@
 Add-LocalGroupMember -Group "Administrators" -Member "$env:COMPUTERNAME\tnduser" -ErrorAction SilentlyContinue
 
 #筆硯新版元件
-    powershell  "$env:SystemDrive\temp\eic.ps1"
+    # powershell  "$env:SystemDrive\temp\eic.ps1"
+#修復筆硯列印工具[機關別]選項列皆為空白問題
+<#$Fix_ORG_Disappear_PC=@('TND-BUSE-072')
+if($Fix_ORG_Disappear_PC.Contains($env:computername)){
+    powershell "$env:SystemDrive\temp\EicPrint_Fix_ORG_Disappear.ps1"
+}
+#>
 <#         
 $Sign_officer_Computers=@("TND-HEAD-150","TND-DEPUTY-014","TND-SEOF-062","TND-STOF-113")
 if($Sign_officer_Computers.Contains($env:computername)){
@@ -35,14 +41,18 @@ if($Sign_officer_Computers.Contains($env:computername)){
 #ThreatSonarPC檢測
     #要安裝的電腦名稱
     #台數最多11台，如果要新增電腦，請從最後者加起，並刪除最前者。
-    $SpecificPC=@("TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-SEOF-152","TND-ASSE-022","TND-ACOF-060","TND-GCSE-076","TND-DEPUTY-151","TND-GASE-085","TND-SEOF-065","TND-ASSE-031","TND-STOF-112","TND-CPSC-064")
-    if($SpecificPC.Contains($env:computername)){
-        powershell "$env:SystemDrive\temp\ThreatSonarPC.ps1"
-    }else{
-        if(Get-ScheduledTask -TaskName "ThreatSonar" -ErrorAction Ignore){
-            Unregister-ScheduledTask -TaskName "ThreatSonar" -Confirm:$False
+    #$SpecificPC=@("TND-PEOF-057","TND-ASSE-031","TND-GASE-061","TND-SEOF-152","TND-ASSE-022","TND-ACOF-060","TND-GCSE-076","TND-DEPUTY-151","TND-GASE-085","TND-SEOF-065","TND-ASSE-031","TND-STOF-112","TND-CPSC-064")
+    <#
+        $SpecificPC=@("TND-STOF-113")
+        if($SpecificPC.Contains($env:computername)){
+            powershell "$env:SystemDrive\temp\ThreatSonarPCv2.ps1"
+        }else{
+            if(Get-ScheduledTask -TaskName "ThreatSonar" -ErrorAction Ignore){
+                Unregister-ScheduledTask -TaskName "ThreatSonar" -Confirm:$False
+            }
         }
-    }
+    #>
+    powershell "$env:SystemDrive\temp\ThreatSonarPCv2.ps1"
 #印表機更名：將中括號[,]替換成【】，因為中括號容易造成字串字元判斷困難
     Get-printer |Where-Object{$_.Name -like  ("*"+[regex]::escape(']'))} |Where-Object{ Rename-Printer -name $_.Name -NewName ((($_.Name -replace  [regex]::escape('['),'【') -replace  [regex]::escape(']'),'】'))}
 
@@ -118,10 +128,20 @@ if($env:computername -eq "TND-PEOF-015"){
 $Temp_PermissionSDDL="G:SYD:(A;;LCSWSDRCWDWO;;;WD)(A;OIIO;RPWPSDRCWDWO;;;WD)(A;;SWRC;;;AC)(A;CIIO;RC;;;AC)(A;OIIO;RPWPSDRCWDWO;;;AC)(A;;LCSWSDRCWDWO;;;CO)(A;OIIO;RPWPSDRCWDWO;;;CO)(A;OIIO;RPWPSDRCWDWO;;;BA)(A;;LCSWSDRCWDWO;;;BA)"
 Get-printer | ForEach-Object{ Set-Printer $_.Name -PermissionSDDL $Temp_PermissionSDDL}
 
-
-
+#蒐集SEP LOG檔
+<#$SET_GetLOG_PC=@("TND-2EES-110","TND-WOME-079")
+if($SET_GetLOG_PC.Contains($env:computername)){
+    powershell "$env:SystemDrive\temp\getSEP_installLOG.ps1"
+}#>
+#powershell "$env:SystemDrive\temp\getSEP_installLOG.ps1"
 #安裝財產申報系統-所長、副所長、會計主任、政風主任、總務科長
 $Pdis_PC=@("TND-HEAD-150","TND-DEPUTY-014","TND-ACOF-060","TND-GEOF-131","TND-GASE-041")
 if($Pdis_PC.Contains($env:computername)){
     powershell  "$env:SystemDrive\temp\Pdis.ps1"
+}
+#更新SEP版本至14.3.558.0000
+$Sep_Registry = "HKLM:\software\wow6432node\symantec\symantec endpoint protection\smc"
+$Sep_NeedReboot_Registry = 'HKLM:\\SOFTWARE\Symantec\Symantec Endpoint Protection\SMC\RebootMgr'
+if(((Get-ItemProperty -Path $Sep_Registry).ProductVersion -ne '14.3.558.0000') -and (!(Test-Path -Path  $Sep_NeedReboot_Registry))){
+    powershell "$env:SystemDrive\temp\SEP_AutoUpdate.ps1"
 }

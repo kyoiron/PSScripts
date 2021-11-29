@@ -1,0 +1,1 @@
+﻿(Get-Content -path $env:PUBLIC\EicPrint\EicPrint.INI) -replace 'KW=https://172.31.3.55/kw/maintain/asp/check_certification.aspx','KW=http://172.31.3.55/kw/maintain/asp/check_certification.aspx' | Set-Content -Path $env:PUBLIC\EicPrint\EicPrint.INI
