@@ -37,7 +37,7 @@ if($Sign_officer_Computers.Contains($env:computername)){
 #Adobe Reader更新
     powershell "$env:SystemDrive\temp\AdobeReaderUpdate.ps1"
 #Java更新
-    powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
+    #powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
 #經費結報系統元件GeasBatchsign更新
     powershell "$env:SystemDrive\temp\GeasBatchsign.ps1" 
 #ThreatSonarPC檢測
