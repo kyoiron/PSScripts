@@ -39,37 +39,37 @@
     $ThreatSonar_zip_FileName =  "ThreatSonar_$Name-PC.zip"  
     $url_exe = "http://download.moj/files/工具檔案/T5/所屬PC/$ThreatSonar_zip_FileName"
     #檔案下載
-    Invoke-WebRequest -Uri $url_exe -OutFile "$env:temp\$ThreatSonar_zip_FileName"
+    Invoke-WebRequest -Uri $url_exe -OutFile "$env:systemdrive\$ThreatSonar_zip_FileName"
     #如果下載成功，與安裝程式進行判斷，如有變動則使用下載版的程式
-    if(Test-Path "$env:temp\$ThreatSonar_zip_FileName"){                  
+    if(Test-Path "$env:systemdrive\$ThreatSonar_zip_FileName"){                  
         #取得下載壓縮檔內的檔案清單
             [Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
-            $FilesInDownloadZip = ([IO.Compression.ZipFile]::OpenRead("$env:temp\$ThreatSonar_zip_FileName").Entries).fullname            
+            $FilesInDownloadZip = ([IO.Compression.ZipFile]::OpenRead("$env:systemdrive\$ThreatSonar_zip_FileName").Entries).fullname            
         #解壓縮下載檔案至暫存資料夾
             if($Unzip_EXE){
                 #使用7zip解壓縮
-                &$Unzip_EXE x "$env:temp\$ThreatSonar_zip_FileName" "-o$env:temp" -y 
+                &$Unzip_EXE x "$env:systemdrive\$ThreatSonar_zip_FileName" "-o$env:systemdrive" -y 
             }else{
                 #使用Powershell之解壓縮命令
-                Expand-Archive -Path "$env:temp\$ThreatSonar_zip_FileName" -DestinationPath $env:temp -Force
+                Expand-Archive -Path "$env:systemdrive\$ThreatSonar_zip_FileName" -DestinationPath $env:systemdrive -Force
             }
         #比對下載檔案跟本機檔案
-            $FileDownload_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$env:temp\$_")).FullName) -Algorithm SHA256).hash}
+            $FileDownload_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$env:systemdrive\$_")).FullName) -Algorithm SHA256).hash}
             $PCFile_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$ThreatSonar_Path\$_")).FullName) -Algorithm SHA256).hash}
             if((!$PCFile_Hash) -or !(@(Compare-Object $FileDownload_Hash $PCFile_Hash -sync 0).Length -eq 0)){
                 #將新檔案替換舊檔
-                $FilesInDownloadZip | ForEach-Object { Move-Item -Path "$env:temp\$_"  -Destination $ThreatSonar_Path -Force}
+                $FilesInDownloadZip | ForEach-Object { Move-Item -Path "$env:systemdrive\$_"  -Destination $ThreatSonar_Path -Force}
                 #刪除壓縮檔清單以外的檔案
                 Get-ChildItem -Path $ThreatSonar_Path -File -Recurse | Where-Object {$FilesInDownloadZip -notcontains $_.Name} | Remove-Item -Force
                 #建立（或重建）排程
                 schtasks /Delete /TN "ThreatSonar" /F                 
                 schtasks /Create /TN ThreatSonar /RU SYSTEM /SC DAILY /RL HIGHEST /TR "$ThreatSonar_Path\ThreatSonar.exe" /ST $Specific_Time /F
             }else{
-                $FilesInDownloadZip | ForEach-Object {Remove-Item "$env:temp\$_" -Force}
+                $FilesInDownloadZip | ForEach-Object {Remove-Item "$env:systemdrive\$_" -Force}
             }
         #刪除暫存區中的下載檔案（zip檔）
-        [IO.Compression.ZipFile]::OpenRead("$env:temp\$ThreatSonar_zip_FileName").Dispose()
-        Remove-Item "$env:temp\$ThreatSonar_zip_FileName" -Force -ErrorAction SilentlyContinue 
+        [IO.Compression.ZipFile]::OpenRead("$env:systemdrive\$ThreatSonar_zip_FileName").Dispose()
+        Remove-Item "$env:systemdrive\$ThreatSonar_zip_FileName" -Force -ErrorAction SilentlyContinue 
     }
     
  #檢查是否安裝成功

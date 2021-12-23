@@ -1,4 +1,8 @@
-﻿function Get-MsiInformation
+﻿#自訂變數區------------------------------------
+$GeasBatchsigns_Path = "\\172.29.205.114\loginscript\Update\GeasBatchsign"
+$Log_Path = "\\172.29.205.114\Public\sources\audit"
+#自訂變數區-------------------------------------
+function Get-MsiInformation
 {
     [CmdletBinding(SupportsShouldProcess=$true, 
                     PositionalBinding=$false,
@@ -79,15 +83,63 @@
         [System.GC]::Collect()
     }
 }
-$GeasBatchsigns_Path = "\\172.29.205.114\loginscript\Update\GeasBatchsign"
-$Log_Path = "\\172.29.205.114\Public\sources\audit"
-$GeasBatchsign_MSIs = Get-ChildItem -Path ($GeasBatchsigns_Path+"\*.msi") 
-$GeasBatchsign_Newest_MSI = $GeasBatchsign_MSIs | ForEach-Object { Get-MsiInformation -Path ($_.FullName ) } | Sort-Object -Descending ProductVersion | Select-Object -first 1
-if($GeasBatchsign_Newest_MSI){
-    $RegUninstallPaths = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*')
+
+$RegUninstallPaths = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*')
+#Visual Studio 2015 的 Visual C++ 可轉散發套件 
+$referenz = @('Microsoft Visual C`+`+ 2015', 'Redistributable') 
+$referenzRegex = [string]::Join('|', $referenz)
+$VCredist = Get-ChildItem -Path ($GeasBatchsigns_Path+"\*.exe") | Where-Object { $_.VersionInfo.FileDescription -match $referenzRegex}
+$VCredist_x64_Newest = (Get-ChildItem -Path ($GeasBatchsigns_Path+"\*.exe") | Where-Object { $_.VersionInfo.FileDescription -match $referenzRegex} | Where-Object { $_.VersionInfo.FileDescription -like "*x64*"}).VersionInfo | Sort-Object -Descending FileVersion | Select-Object -first 1
+$VCredist_x86_Newest = (Get-ChildItem -Path ($GeasBatchsigns_Path+"\*.exe") | Where-Object { $_.VersionInfo.FileDescription -match $referenzRegex} | Where-Object { $_.VersionInfo.FileDescription -like "*x86*"}).VersionInfo | Sort-Object -Descending FileVersion | Select-Object -first 1
+
+if($VCredist_x64_Newest -or $VCredist_x86_Newest){
+    $VCredist_x64_installeds = $null
+    $VCredist_x86_installeds = $null
     foreach ($Path in $RegUninstallPaths) {
         if (Test-Path $Path) {
-            $GeasBatchsign_installeds = Get-ItemProperty $Path | Where-Object{$_.DisplayName -eq $GeasBatchsign_Newest_MSI.ProductName}
+            $VCredist_x64_installeds += @(Get-ItemProperty $Path | Where-Object{$_.DisplayName -like 'Microsoft Visual C++ 2015*'} | Where-Object{$_.DisplayName -like '*Redistributable (x64)*'})
+            $VCredist_x86_installeds += @(Get-ItemProperty $Path | Where-Object{$_.DisplayName -like 'Microsoft Visual C++ 2015*'} | Where-Object{$_.DisplayName -like '*Redistributable (x86)*'})
+        }
+    }
+}
+$VCredist_x64_installed = $VCredist_x64_installeds | Sort-Object -Descending  DisplayVersion  | Select-Object -first 1
+$VCredist_x86_installed = $VCredist_x86_installeds | Sort-Object -Descending  DisplayVersion  | Select-Object -first 1
+if(($VCredist_x64_installed) -and ($VCredist_x64_installed.DisplayVersion -lt $VCredist_x64_Newest.FileVersion)){
+    $LogName = $env:Computername + "_"+ $VCredist_x64_Newest.ProductName + "*.txt"
+    $VCredist_x64_Newest_fileName = (Get-Item $VCredist_x64_Newest.FileName).Name
+    $arguments = " /q /norestart /log ""$env:systemdrive\temp\" +  $LogName+""""        
+    robocopy $GeasBatchsigns_Path "$env:systemdrive\temp" $VCredist_x64_Newest_fileName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+    unblock-file ("$env:systemdrive\temp\$VCredist_x64_Newest_fileName" )
+    start-process "$env:systemdrive\temp\$VCredist_x64_Newest_fileName" -arg $arguments -Wait
+    #write-host 'start-process $VCredist_x64_Newest.FileName -arg $arguments -Wait'
+    
+    $Log_Folder_Path = $Log_Path + "\"+ $VCredist_x64_Newest.ProductName
+    if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
+    if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
+}
+if(($VCredist_x86_installed) -and ($VCredist_x86_installed.DisplayVersion -lt $VCredist_x86_Newest.FileVersion)){
+    $LogName = $env:Computername + "_"+ $VCredist_x86_Newest.ProductName + "*.txt"
+    $VCredist_x86_Newest_fileName = (Get-Item $VCredist_x86_Newest.FileName).Name
+    $arguments = " /q /norestart /log ""$env:systemdrive\temp\" +  $LogName+""""        
+    robocopy $GeasBatchsigns_Path "$env:systemdrive\temp" $VCredist_x86_Newest_fileName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+    unblock-file ("$env:systemdrive\temp\$VCredist_x86_Newest_fileName" )
+    start-process "$env:systemdrive\temp\$VCredist_x86_Newest_fileName" -arg $arguments -Wait
+    #write-host 'start-process $VCredist_x86_Newest.FileName -arg $arguments -Wait'
+    $Log_Folder_Path = $Log_Path + "\"+ $VCredist_x86_Newest.ProductName
+    if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
+    if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
+}
+
+#GeasBatchsign
+$GeasBatchsign_MSIs = Get-ChildItem -Path ($GeasBatchsigns_Path+"\*.msi") 
+$GeasBatchsign_Newest_MSI = $GeasBatchsign_MSIs | ForEach-Object { Get-MsiInformation -Path ($_.FullName ) } | Sort-Object -Descending ProductVersion | Select-Object -first 1
+if($GeasBatchsign_Newest_MSI){    
+    $GeasBatchsign2_installeds = $null
+    $GeasBatchsign_installeds = $null
+    foreach ($Path in $RegUninstallPaths) {
+        if (Test-Path $Path) {
+            $GeasBatchsign2_installeds += @(Get-ItemProperty $Path | Where-Object{$_.DisplayName -like "背景簽章服務2"})
+            $GeasBatchsign_installeds += @(Get-ItemProperty $Path | Where-Object{$_.DisplayName -eq $GeasBatchsign_Newest_MSI.ProductName})
         }
     }
     <#
@@ -124,11 +176,29 @@ if($GeasBatchsign_Newest_MSI){
         PSProvider          : Microsoft.PowerShell.Core\Registry
     #>
     $GeasBatchsign_installed = $GeasBatchsign_installeds| Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
-    #if([version]$GeasBatchsign_installed.DisplayVersion -ge [version]$GeasBatchsign_Newest_MSI.ProductVersion){exit}
-    #有安裝，就直接離開。因為有裝2版仍可正常運作，如果裝3版則無法判斷次版本新舊，所以沒裝的再裝即可。
-    if($null -ne $GeasBatchsign_installed){exit}
+    #移除所有已安裝的2版程式
+    if($GeasBatchsign2_installeds){
+        Taskkill /f /im javaw.exe
+        foreach($exe in $GeasBatchsign2_installeds){        
+            $uninstall = ($exe.UninstallString  -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X","").Trim()
+            $LogName = $env:Computername + "_"+ $exe.DisplayName+"_"+ $exe.DisplayVersion + ".txt"
+            $LogFile = $env:systemdrive+"\temp\" + $LogName            
+            start-process "msiexec.exe" -arg "/X $uninstall /quiet /passive /norestart /log ""$LogFile""" -Wait -WindowStyle Hidden               
+            $Log_Folder_Path = $Log_Path + "\"+ $exe.DisplayName
+            if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
+            if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null} 
+    
+        }
+    }
+    #如果已安裝版本較新或相同則結束程式
+    if([version]$GeasBatchsign_installed.DisplayVersion -ge [version]$GeasBatchsign_Newest_MSI.ProductVersion){exit}
+    <#
+        #舊版程式存參。
+        #有安裝，就直接離開。因為有裝2版仍可正常運作，如果裝3版則無法判斷次版本新舊，所以沒裝的再裝即可。
+        #if($null -ne $GeasBatchsign_installed){exit}
+    #>
     $LogName = $env:Computername + "_"+$GeasBatchsign_Newest_MSI.ProductName +"_"+$GeasBatchsign_Newest_MSI.ProductVersion + ".txt"
-    $GeasBatchsign_MIS_fileName = (Get-Item $GeasBatchsign_Newest_MSI.File).Name 
+    $GeasBatchsign_MIS_fileName = (Get-Item $GeasBatchsign_Newest_MSI.File).Name
     $arguments = "/i $env:systemdrive\temp\$GeasBatchsign_MIS_fileName  /qn /log ""$env:systemdrive\temp\" +  $LogName+""""
     robocopy $GeasBatchsigns_Path "$env:systemdrive\temp" (Get-ChildItem -Path $GeasBatchsign_Newest_MSI.File).Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
     start-process "msiexec" -arg $arguments -Wait
