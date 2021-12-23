@@ -104,7 +104,7 @@ if($VCredist_x64_Newest -or $VCredist_x86_Newest){
 }
 $VCredist_x64_installed = $VCredist_x64_installeds | Sort-Object -Descending  DisplayVersion  | Select-Object -first 1
 $VCredist_x86_installed = $VCredist_x86_installeds | Sort-Object -Descending  DisplayVersion  | Select-Object -first 1
-if(($VCredist_x64_installed) -and ($VCredist_x64_installed.DisplayVersion -lt $VCredist_x64_Newest.FileVersion)){
+if(($VCredist_x64_installed -eq $Null)-or($VCredist_x64_installed) -and ($VCredist_x64_installed.DisplayVersion -lt $VCredist_x64_Newest.FileVersion)){
     $LogName = $env:Computername + "_"+ $VCredist_x64_Newest.ProductName + "*.txt"
     $VCredist_x64_Newest_fileName = (Get-Item $VCredist_x64_Newest.FileName).Name
     $arguments = " /q /norestart /log ""$env:systemdrive\temp\" +  $LogName+""""        
@@ -117,7 +117,7 @@ if(($VCredist_x64_installed) -and ($VCredist_x64_installed.DisplayVersion -lt $V
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
     if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
 }
-if(($VCredist_x86_installed) -and ($VCredist_x86_installed.DisplayVersion -lt $VCredist_x86_Newest.FileVersion)){
+if(($VCredist_x86_installed -eq $Null)-or(($VCredist_x86_installed) -and ($VCredist_x86_installed.DisplayVersion -lt $VCredist_x86_Newest.FileVersion))){
     $LogName = $env:Computername + "_"+ $VCredist_x86_Newest.ProductName + "*.txt"
     $VCredist_x86_Newest_fileName = (Get-Item $VCredist_x86_Newest.FileName).Name
     $arguments = " /q /norestart /log ""$env:systemdrive\temp\" +  $LogName+""""        

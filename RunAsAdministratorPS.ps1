@@ -38,6 +38,8 @@ if($Sign_officer_Computers.Contains($env:computername)){
     powershell "$env:SystemDrive\temp\AdobeReaderUpdate.ps1"
 #Java更新
     powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
+#經費結報系統元件GeasBatchsign更新
+    powershell "$env:SystemDrive\temp\GeasBatchsign.ps1" 
 #ThreatSonarPC檢測
     #要安裝的電腦名稱
     #台數最多11台，如果要新增電腦，請從最後者加起，並刪除最前者。
