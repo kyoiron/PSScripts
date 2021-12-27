@@ -18,7 +18,7 @@
             }            
         }
 #檢查是否有安裝舊版
-    if(test-Path "$ThreatSonar_Path\TS_scan.bat"){
+    if((test-Path "$ThreatSonar_Path\TS_scan.bat") -or ((Get-ScheduledTask -TaskName "ThreatSonar").actions.Execute -ne "$ThreatSonar_Path\ThreatSonar.exe")){
         #1.刪除舊版程式    
             #Stop service 終止 Process
                 Taskkill /F /PID ThreatSonar.exe
