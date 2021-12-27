@@ -77,7 +77,7 @@ if($DormPC.Contains($env:computername)){
     }
 #>
 #Get-ChildItem -Path C:\Temp -Include * -Recurse -Force | foreach { $_.Delete()}
-
+<#
 if((Get-ScheduledTaskInfo -TaskName "PCinspection" -ErrorAction Ignore).LastTaskResult -ne 0){
     #年份
     $year = "110"
@@ -104,7 +104,7 @@ if((Get-ScheduledTaskInfo -TaskName "PCinspection" -ErrorAction Ignore).LastTask
     #write-host $schtasksOutput
     #powershell "$env:SystemDrive\temp\PCinspection.ps1"
 }
-
+#>
 #$Rebuid_EICSignTSR_PC=@("TND-BUSE-072")
 $Rebuid_EICSignTSR_PC=@()
 if($Rebuid_EICSignTSR_PC.Contains($env:computername)){   

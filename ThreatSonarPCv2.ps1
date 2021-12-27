@@ -39,37 +39,52 @@
     $ThreatSonar_zip_FileName =  "ThreatSonar_$Name-PC.zip"  
     $url_exe = "http://download.moj/files/工具檔案/T5/所屬PC/$ThreatSonar_zip_FileName"
     #檔案下載
-    Invoke-WebRequest -Uri $url_exe -OutFile "$env:systemdrive\temp\$ThreatSonar_zip_FileName"
+    Start-Job -Name WebReq -ScriptBlock { param($p1, $p2)
+        Invoke-WebRequest -Uri $p1 -OutFile "$env:systemdrive\temp\$p2"
+    } -ArgumentList $url_exe,$ThreatSonar_zip_FileName
+
+    Wait-Job -Name WebReq -Force
+    Remove-Job -Name WebReq -Force
+
     #如果下載成功，與安裝程式進行判斷，如有變動則使用下載版的程式
-    if(Test-Path "$env:systemdrive\temp\$ThreatSonar_zip_FileName"){                  
+    $TEMP_Folder = "$env:systemdrive\temp"
+    if(Test-Path "$TEMP_Folder\$ThreatSonar_zip_FileName"){                  
         #取得下載壓縮檔內的檔案清單
             [Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
-            $FilesInDownloadZip = ([IO.Compression.ZipFile]::OpenRead("$env:systemdrive\temp\$ThreatSonar_zip_FileName").Entries).fullname            
+            $FilesInDownloadZip = ([IO.Compression.ZipFile]::OpenRead("$TEMP_Folder\$ThreatSonar_zip_FileName").Entries).fullname            
         #解壓縮下載檔案至暫存資料夾
             if($Unzip_EXE){
                 #使用7zip解壓縮
-                &$Unzip_EXE x "$env:systemdrive\temp\$ThreatSonar_zip_FileName" "-o$env:systemdrive\temp" -y 
+                &$Unzip_EXE x "$TEMP_Folder\$ThreatSonar_zip_FileName" "-o$TEMP_Folder" -y
             }else{
                 #使用Powershell之解壓縮命令
-                Expand-Archive -Path "$env:systemdrive\temp\$ThreatSonar_zip_FileName" -DestinationPath "$env:systemdrive\temp" -Force
+                Expand-Archive -Path "$TEMP_Folder\$ThreatSonar_zip_FileName" -DestinationPath $TEMP_Folder -Force
             }
         #比對下載檔案跟本機檔案
-            $FileDownload_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$env:systemdrive\temp\$_")).FullName) -Algorithm SHA256).hash}
-            $PCFile_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$ThreatSonar_Path\$_")).FullName) -Algorithm SHA256).hash}
+            $FileDownload_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$TEMP_Folder\$_")).FullName) -Algorithm SHA256).hash}
+            $PCFile_Hash = $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$ThreatSonar_Path\$_")).FullName) -Algorithm SHA256).hash}
             if((!$PCFile_Hash) -or !(@(Compare-Object $FileDownload_Hash $PCFile_Hash -sync 0).Length -eq 0)){
                 #將新檔案替換舊檔
-                $FilesInDownloadZip | ForEach-Object { Move-Item -Path "$env:systemdrive\temp\$_"  -Destination $ThreatSonar_Path -Force}
+                $FilesInDownloadZip | ForEach-Object { Move-Item -Path "$TEMP_Folder\$_"  -Destination $ThreatSonar_Path -Force}
                 #刪除壓縮檔清單以外的檔案
                 Get-ChildItem -Path $ThreatSonar_Path -File -Recurse | Where-Object {$FilesInDownloadZip -notcontains $_.Name} | Remove-Item -Force
                 #建立（或重建）排程
                 schtasks /Delete /TN "ThreatSonar" /F                 
                 schtasks /Create /TN ThreatSonar /RU SYSTEM /SC DAILY /RL HIGHEST /TR "$ThreatSonar_Path\ThreatSonar.exe" /ST $Specific_Time /F
             }else{
-                $FilesInDownloadZip | ForEach-Object {Remove-Item "$env:systemdrive\temp\$_" -Force}
+                $FilesInDownloadZip | ForEach-Object {Remove-Item "$TEMP_Folder\$_" -Force}
             }
-        #刪除暫存區中的下載檔案（zip檔）
-        [IO.Compression.ZipFile]::OpenRead("$env:systemdrive\temp\$ThreatSonar_zip_FileName").Dispose()
-        Remove-Item "$env:systemdrive\temp\$ThreatSonar_zip_FileName" -Force -ErrorAction SilentlyContinue 
+        #釋放ZIP檔
+        Start-Job -Name ZipClose -ScriptBlock { param($p1)        
+            [IO.Compression.ZipFile]::OpenRead("$TEMP_Folder\$ThreatSonar_zip_FileName").Dispose()   
+        } -ArgumentList "$TEMP_Folder\$ThreatSonar_zip_FileName"
+        Wait-Job -Name ZipClose -Force
+        Remove-Job -Name ZipClose -Force
+        #刪除暫存檔案
+        if("$TEMP_Folder\$ThreatSonar_zip_FileName"){Remove-Item "$TEMP_Folder\$ThreatSonar_zip_FileName" -Force }
+        #上次程式錯誤的bug，移除下載檔
+        if("$TEMP_Folder\$ThreatSonar_zip_FileName"){Remove-Item "$env:systemdrive\$ThreatSonar_zip_FileName" -Force }
+                
     }
     
  #檢查是否安裝成功
@@ -81,7 +96,7 @@
         Switch ($LastResult){
             0 {$LastResult_Check = $LastResult_Check + "作業成功完成."}
             1 {$LastResult_Check = $LastResult_Check + "調用了不正確的函數或調用了未知的函數。"}
-            2 {$LastResult_Check = $LastResult_Check + "檔案為找到。"}
+            2 {$LastResult_Check = $LastResult_Check + "檔案未找到。"}
             10 {$LastResult_Check = $LastResult_Check +"環境不正確"} 
             267008 {$LastResult_Check = $LastResult_Check +"排程工作已準備在下個預定時間執行"}
             267009 {$LastResult_Check = $LastResult_Check +"排程工作正在執行中" }
@@ -114,10 +129,10 @@
     $ThreatSonarFiles_Check = $Null
     $FilesInDownloadZip | ForEach-Object{if(Test-Path(Get-ChildItem -Path ("$ThreatSonar_Path\$_")).FullName){$ThreatSonarFiles_Check= $ThreatSonarFiles_Check + "$_ 檔案存在於 $ThreatSonar_Path`r`n"}else{$ThreatSonarFiles_Check = $ThreatSonarFiles_Check + "$_ 檔案不存在於 $ThreatSonar_Path`r`n"}}    
     #將檢查結果會出成log檔並上傳指定位置
-    (get-date).ToString() + "`r`n$ScheduledTask_Check`r`n$LastResult_Check`r`n$ThreatSonarFiles_Check`r`n" | Out-File -FilePath "$env:SystemDrive\temp\${env:COMPUTERNAME}_ThreatSonar_Check.txt"
-    if(test-path "$env:allusersprofile\Task\sonar.log"){Copy-Item -Path "$env:allusersprofile\Task\sonar.log" -Destination "$env:SystemDrive\temp\${env:COMPUTERNAME}_sonar.log" -Force }
-    if(test-path "$env:allusersprofile\Task\sonarError.log"){Copy-Item -Path "$env:allusersprofile\Task\sonarError.log" -Destination "$env:SystemDrive\temp\${env:COMPUTERNAME}_sonarError.log" -Force }    
-    robocopy "$env:systemdrive\temp" $Log_Folder_Path "${env:COMPUTERNAME}_ThreatSonar_Check.txt" "${env:COMPUTERNAME}_sonar.log" "${env:COMPUTERNAME}_sonarError.log" "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null                
+    (get-date).ToString() + "`r`n$ScheduledTask_Check`r`n$LastResult_Check`r`n$ThreatSonarFiles_Check`r`n" | Out-File -FilePath "$TEMP_Folder\${env:COMPUTERNAME}_ThreatSonar_Check.txt"
+    if(test-path "$env:allusersprofile\Task\sonar.log"){Copy-Item -Path "$env:allusersprofile\Task\sonar.log" -Destination "$TEMP_Folder\${env:COMPUTERNAME}_sonar.log" -Force }
+    if(test-path "$env:allusersprofile\Task\sonarError.log"){Copy-Item -Path "$env:allusersprofile\Task\sonarError.log" -Destination "$TEMP_Folder\${env:COMPUTERNAME}_sonarError.log" -Force }    
+    robocopy $TEMP_Folder $Log_Folder_Path "${env:COMPUTERNAME}_ThreatSonar_Check.txt" "${env:COMPUTERNAME}_sonar.log" "${env:COMPUTERNAME}_sonarError.log" "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null                
     <#  排程結果回傳碼及相對意義
         0 - The operation completed successfully.
         1 - Incorrect function called or unknown function called. 2 File not found.
@@ -136,3 +151,5 @@
         3221225786 - The application terminated as a result of a CTRL+C. 
         3228369022 - Unknown software exception.        
     #>
+    
+
