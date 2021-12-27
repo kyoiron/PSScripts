@@ -47,11 +47,15 @@
     Remove-Job -Name WebReq -Force
 
     #如果下載成功，與安裝程式進行判斷，如有變動則使用下載版的程式
-    $TEMP_Folder = "$env:systemdrive\temp"
-    if(Test-Path "$TEMP_Folder\$ThreatSonar_zip_FileName"){                  
+    $TEMP_Folder = "$env:systemdrive\temp"  
+    if(Test-Path "$TEMP_Folder\$ThreatSonar_zip_FileName"){
+        #資料夾不存在則建立
+        if(!$ThreatSonar_Path){           
+           New-Item -Path "$env:systemdrive" -Name "ThreatSonar" -ItemType "directory" -Force
+        }
         #取得下載壓縮檔內的檔案清單
             [Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
-            $FilesInDownloadZip = ([IO.Compression.ZipFile]::OpenRead("$TEMP_Folder\$ThreatSonar_zip_FileName").Entries).fullname            
+            $FilesInDownloadZip = ([IO.Compression.ZipFile]::OpenRead("$TEMP_Folder\$ThreatSonar_zip_FileName").Entries).fullname
         #解壓縮下載檔案至暫存資料夾
             if($Unzip_EXE){
                 #使用7zip解壓縮
