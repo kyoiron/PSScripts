@@ -50,8 +50,8 @@
     $TEMP_Folder = "$env:systemdrive\temp"  
     if(Test-Path "$TEMP_Folder\$ThreatSonar_zip_FileName"){
         #資料夾不存在則建立
-        if(!$ThreatSonar_Path){           
-           New-Item -Path "$env:systemdrive" -Name "ThreatSonar" -ItemType "directory" -Force
+        if(!(Test-Path  $ThreatSonar_Path)){           
+           New-Item -Path "$env:systemdrive\ThreatSonar" -ItemType "directory" -Force 
         }
         #取得下載壓縮檔內的檔案清單
             [Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
