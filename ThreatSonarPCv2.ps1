@@ -29,7 +29,7 @@
                 #Get-ChildItem -Path "$env:ProgramData\Task" -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item        
                 #Get-ChildItem -Path "$env:ProgramData\sonar*" -Include sonar*.*  -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item
                 #Get-ChildItem -Path "$env:ProgramFiles(x86)\ThreatSonar" -Force -Recurse  -ErrorAction SilentlyContinue| Remove-Item
-                Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramData\Task\malicious_result\""* /q /f & del ""$env:ProgramData\Task\""* /q /f & del ""$env:ProgramData\sonar""* /q /f &del ""$env:ProgramFiles(x86)\ThreatSonar""\* /q /f & RD $env:ProgramData\malicious_result & RD $env:ProgramData\Task & RD $env:ProgramData\sonar & RD ""$env:ProgramFiles(x86)\ThreatSonar\"" & PAUSE" -Wait
+                Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramData\Task\malicious_result\""* /q /f & del ""$env:ProgramData\Task\""* /q /f & del ""$env:ProgramData\sonar""* /q /f &del ""$env:ProgramFiles(x86)\ThreatSonar""\* /q /f & RD $env:ProgramData\malicious_result & RD $env:ProgramData\Task & RD $env:ProgramData\sonar & RD ""$env:ProgramFiles(x86)\ThreatSonar\""" -Wait
                 #Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramData\Task\""* /q /f" -Wait
                 #Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramData\sonar""* /q /f" -Wait
                 #Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramFiles(x86)\ThreatSonar""\* /q /f" -Wait
