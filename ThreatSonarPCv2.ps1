@@ -26,9 +26,17 @@
             #Remove Service
                 sc delete ThreatSonar        
             #Remove Files and Folders in endpoint
-                Get-ChildItem -Path "$env:ProgramData\Task" -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item        
-                Get-ChildItem -Path "$env:ProgramData\sonar*" -Include sonar*.*  -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item
-                Get-ChildItem -Path "$env:ProgramFiles(x86)\ThreatSonar" -Force -Recurse  -ErrorAction SilentlyContinue| Remove-Item
+                #Get-ChildItem -Path "$env:ProgramData\Task" -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item        
+                #Get-ChildItem -Path "$env:ProgramData\sonar*" -Include sonar*.*  -Force -Recurse -ErrorAction SilentlyContinue | Remove-Item
+                #Get-ChildItem -Path "$env:ProgramFiles(x86)\ThreatSonar" -Force -Recurse  -ErrorAction SilentlyContinue| Remove-Item
+                Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramData\Task\malicious_result\""* /q /f & del ""$env:ProgramData\Task\""* /q /f & del ""$env:ProgramData\sonar""* /q /f &del ""$env:ProgramFiles(x86)\ThreatSonar""\* /q /f & RD $env:ProgramData\malicious_result & RD $env:ProgramData\Task & RD $env:ProgramData\sonar & RD ""$env:ProgramFiles(x86)\ThreatSonar\"" & PAUSE" -Wait
+                #Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramData\Task\""* /q /f" -Wait
+                #Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramData\sonar""* /q /f" -Wait
+                #Start-Process cmd.exe -Verb RunAs -Args '/c',"del ""$env:ProgramFiles(x86)\ThreatSonar""\* /q /f" -Wait
+                #Start-Process cmd.exe -Verb RunAs -Args '/c',"RD $env:ProgramData\malicious_result" -Wait
+                #Start-Process cmd.exe -Verb RunAs -Args '/c',"RD $env:ProgramData\Task" -Wait
+                #Start-Process cmd.exe -Verb RunAs -Args '/c',"RD $env:ProgramData\sonar" -Wait
+                #Start-Process cmd.exe -Verb RunAs -Args '/c',"RD ""$env:ProgramFiles(x86)\ThreatSonar\""" -Wait                
         #2.刪除排程
             schtasks /Delete /TN "ThreatSonar" /F
             #Unregister-ScheduledTask -TaskName "ThreatSonar" -Confirm:$false -WhatIf
@@ -51,7 +59,7 @@
     if(Test-Path "$TEMP_Folder\$ThreatSonar_zip_FileName"){
         #資料夾不存在則建立
         if(!(Test-Path  $ThreatSonar_Path)){           
-           New-Item -Path "$env:systemdrive\ThreatSonar" -ItemType "directory" -Force 
+           New-Item -Path "$env:systemdrive\ThreatSonar" -ItemType "directory" -Force
         }
         #取得下載壓縮檔內的檔案清單
             [Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
