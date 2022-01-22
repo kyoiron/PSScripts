@@ -37,7 +37,7 @@ if($Sign_officer_Computers.Contains($env:computername)){
 #Adobe Reader更新
     powershell "$env:SystemDrive\temp\AdobeReaderUpdate.ps1"
 #Java更新
-    #powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
+    powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
 #經費結報系統元件GeasBatchsign更新
     powershell "$env:SystemDrive\temp\GeasBatchsign.ps1" 
 #ThreatSonarPC檢測
@@ -146,4 +146,8 @@ $Sep_Registry = "HKLM:\software\wow6432node\symantec\symantec endpoint protectio
 $Sep_NeedReboot_Registry = 'HKLM:\\SOFTWARE\Symantec\Symantec Endpoint Protection\SMC\RebootMgr'
 if(((Get-ItemProperty -Path $Sep_Registry).ProductVersion -ne '14.3.558.0000') -and (!(Test-Path -Path  $Sep_NeedReboot_Registry))){
     powershell "$env:SystemDrive\temp\SEP_AutoUpdate.ps1"
+}
+#檢查UAC有沒有開啟，沒開啟開啟。
+if((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA -eq 0){
+    Set-ItemProperty -Path REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name EnableLUA -Value 1
 }
