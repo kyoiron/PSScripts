@@ -95,7 +95,7 @@
         #刪除暫存檔案
         if("$TEMP_Folder\$ThreatSonar_zip_FileName"){Remove-Item "$TEMP_Folder\$ThreatSonar_zip_FileName" -Force }
         #上次程式錯誤的bug，移除下載檔
-        if("$TEMP_Folder\$ThreatSonar_zip_FileName"){Remove-Item "$env:systemdrive\$ThreatSonar_zip_FileName" -Force }
+        if("$TEMP_Folder\$ThreatSonar_zip_FileName"){Remove-Item "$env:systemdrive\$ThreatSonar_zip_FileName" -Force -ErrorAction SilentlyContinue }
                 
     }
     

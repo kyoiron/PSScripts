@@ -1,5 +1,17 @@
 ﻿#將tnduser加入本機管理者帳號
 Add-LocalGroupMember -Group "Administrators" -Member "$env:COMPUTERNAME\tnduser" -ErrorAction SilentlyContinue
+#將tnduser加入本機管理者帳號
+net user "tndadmin" /active:yes
+Get-LocalUser -Name tnduser | Select-Object * | Out-File $env:SystemDrive\temp\${env:computername}_tnduserStatus.txt
+if(test-path("$env:SystemDrive\temp\tnduserStatus.txt")){Copy-Item "$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt" -Destination  "\\172.29.205.114\Public\sources\audit\tudnser" -Force}
+#更改tnduser密碼
+<#
+if($env:COMPUTERNAME -eq "TND-5EES-068" ){
+    $Password = "me@TND1234"
+    $UserAccount = Get-LocalUser -Name "tnduser"
+    $UserAccount | Set-LocalUser -Password (ConvertTo-SecureString -AsPlainText "$Password" -Force)
+}
+#>
 
 #筆硯新版元件
     # powershell  "$env:SystemDrive\temp\eic.ps1"
@@ -31,7 +43,11 @@ if($Sign_officer_Computers.Contains($env:computername)){
 }#>
 
 #HiCOS更新
-    powershell  "$env:SystemDrive\temp\HiCOS_Update.ps1"
+    #不更新Hicos的電腦名稱
+    $NotUpdateHicos_ComputerName=@("TND-GASE-089")    
+    if(!$NotUpdateHicos_ComputerName.Contains($env:computername)){
+        powershell  "$env:SystemDrive\temp\HiCOS_Update.ps1"        
+    }
 #Chrome更新
     powershell "$env:SystemDrive\temp\ChromeUpdate.ps1"
 #Adobe Reader更新
@@ -40,6 +56,8 @@ if($Sign_officer_Computers.Contains($env:computername)){
     powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
 #經費結報系統元件GeasBatchsign更新
     powershell "$env:SystemDrive\temp\GeasBatchsign.ps1" 
+#MariaDB ODBC Driver 64-bit更新
+    powershell "$env:SystemDrive\temp\MariadbConnectorOdbc.ps1"
 #ThreatSonarPC檢測
     #要安裝的電腦名稱
     #台數最多11台，如果要新增電腦，請從最後者加起，並刪除最前者。
@@ -64,9 +82,32 @@ if($Sign_officer_Computers.Contains($env:computername)){
     powershell "$env:SystemDrive\temp\UninstallSoftware.ps1" 
 
 #異地辦公室個人電腦匯入印表機設定
-$DormPC = @("TND-RMSE-047","TND-DEPUTY-151","TND-ACOF-020","TND-PEOF-031","TND-SASE-111","TND-SEOF-152","TND-GASE-055","TND-GASE-088","TND-GASE-044","TND-ACOF-032","TND-PEOF-030","TND-SASE-155","TND-BUSE-159","TND-ACOF-040","TND-GASE-045","TND-GCSE-086","TND-GCSE-051","TND-STOF-112")
+$DormPC = @("TND-RMSE-047","TND-DEPUTY-151","TND-ACOF-040","TND-PEOF-031","TND-SASE-173","TND-SEOF-152","TND-GASE-055","TND-GASE-088","TND-GASE-044","TND-PEOF-030","TND-SASE-155","TND-BUSE-159","TND-GASE-045","TND-STOF-113","TND-ACOF-040","TND-ACOF-032","TND-5EES-068","TND-STOF-119")
+$DormRemovePrinter = @("Kyocera ECOSYS P3050dn KX 【25號宿舍】","Kyocera ECOSYS P5025cdn KX 【20號宿舍】","Kyocera ECOSYS P3050dn KX 【19號宿舍】")
+
 if($DormPC.Contains($env:computername)){
+    (Get-printer).Name | Where-Object{ $DormRemovePrinter  -Contains $_} | where-object{ Remove-Printer -name $_ }
     powershell "$env:SystemDrive\temp\DormPrinterImport.ps1" 
+}
+
+#指定電腦（們）匯入特定電腦的印表機封裝檔
+#要匯入的電腦
+$InstallPrinterPC=@()
+#指定哪個電腦的匯出當匯入範本
+$ImportFromeComputername = ""
+if($InstallPrinterPC.Contains($env:computername)){
+    $PrinterExportFileLocation = "\\172.29.205.114\mig\Printer"
+    $File_Name = $ImportFromeComputername +"x64.printerExport"
+    $File_FullName = $PrinterExportFileLocation + "\" + $File_Name
+    if(Test-Path $File_FullName){
+        robocopy $PrinterExportFileLocation "$env:systemdrive\temp" $File_Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+        $tempFile = "$env:systemdrive\temp\" + $File_Name
+        start-Process cmd.exe -Verb RunAs -Args '/c',"${env:SystemRoot}\system32\Spool\Tools\Printbrm.exe -R -F $tempFile -O FORCE" -Wait
+        Get-printer | ForEach-Object{Set-Printer $_.Name -PermissionSDDL ((Get-Printer -Name 'Microsoft Print to PDF' -full).PermissionSDDL)}
+        Remove-Item $tempFile -Force
+        remove-item -Path ($PrinterExportFileLocation+"\"+$env:computername+"x64.printerExport") -Force
+        #powershell "$env:SystemDrive\temp\SpecificPrintersImport.ps1" 
+    }
 }
 
 <#
@@ -116,6 +157,28 @@ if($Rebuid_EICSignTSR_PC.Contains($env:computername)){
     Stop-Process -Name EicSignTSR -Force 
 }
 
+#指紋機驅動程式安裝
+$FingerPrint_PC =@("TND-COU-141","TND-RMSE-142"."TND-GCSE-143","TND-CENTRAL-144","TND-GCSE-146","TND-GCSE-147")
+#$FingerPrint_PC =@("TND-STOF-113")
+#$FingerPrint_PC =@()
+if($FingerPrint_PC.Contains($env:computername)){   
+    $RegUninstallPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    $Driver_RET = "\\172.29.205.114\loginscript\Update\Driver_RET"
+    $Log_Path = "\\172.29.205.114\Public\sources\audit"    
+    $DigitalPersona_installeds = Get-ItemProperty $RegUninstallPath | Where-Object{$_.DisplayName -match "DigitalPersona SDK Runtime"}               
+    $Log_Folder_Path = $Log_Path +"\"+ "DigitalPersona SDK Runtime"
+    if(($DigitalPersona_installeds -eq $null) -or ([Version]$DigitalPersona_installeds.DisplayVersion -lt  [Version]3.4.0.127)){
+        robocopy $Driver_RET "$env:systemdrive\temp"  /E /XO /NJH /NJS /NDL /NC /NS | Out-Null
+
+        #start-process $env:systemdrive\temp\RET\InstallOnly.bat
+        $arguments="/s /v""REBOOT=ReallySuppress /qn /l*v $env:systemdrive\temp\$env:Computername" + "_ururte_install.log"""        
+        start-process ($env:systemdrive+"\temp\RET\Setup.exe") -arg $arguments -wait -WindowStyle Hidden                
+    }
+    if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
+    $LogPattern="${env:Computername}"+"_ururte_install.log"
+    if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
+}
+
 #安裝差勤上傳程式
 <#
 #差勤上傳機器電腦名稱"TND-PEOF-015"
@@ -129,25 +192,71 @@ if($env:computername -eq "TND-PEOF-015"){
 #印表機權限
 $Temp_PermissionSDDL="G:SYD:(A;;LCSWSDRCWDWO;;;WD)(A;OIIO;RPWPSDRCWDWO;;;WD)(A;;SWRC;;;AC)(A;CIIO;RC;;;AC)(A;OIIO;RPWPSDRCWDWO;;;AC)(A;;LCSWSDRCWDWO;;;CO)(A;OIIO;RPWPSDRCWDWO;;;CO)(A;OIIO;RPWPSDRCWDWO;;;BA)(A;;LCSWSDRCWDWO;;;BA)"
 Get-printer | ForEach-Object{ Set-Printer $_.Name -PermissionSDDL $Temp_PermissionSDDL}
-
+#同電腦名稱印表機匯入作業
+<#
+$ImportPrinterPC=@("TND-PEOF-030")
+if ($ImportPrinterPC.Contains($env:computername)){    
+    $PrinterExportFileLocation = "\\172.29.205.114\mig\Printer"
+    $File_Name = $env:computername+"x64.printerExport"
+    $File_FullName = $PrinterExportFileLocation + "\" + $File_Name
+    robocopy $PrinterExportFileLocation "$env:systemdrive\temp" $File_Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+    $tempFile = "$env:systemdrive\temp\" + $File_Name
+    start-Process cmd.exe -Verb RunAs -Args '/c',"${env:SystemRoot}\system32\Spool\Tools\Printbrm.exe -R -F $tempFile" -Wait
+    Get-printer | ForEach-Object{ Set-Printer $_.Name -PermissionSDDL ((Get-Printer -Name 'Microsoft Print to PDF' -full).PermissionSDDL)}
+    Remove-Item $tempFile
+    Move-Item -Path $File_FullName -Destination "\\172.29.205.114\mig\Printer_BACKUP" -Force
+}
+#>
 #蒐集SEP LOG檔
 <#$SET_GetLOG_PC=@("TND-2EES-110","TND-WOME-079")
 if($SET_GetLOG_PC.Contains($env:computername)){
     powershell "$env:SystemDrive\temp\getSEP_installLOG.ps1"
 }#>
 #powershell "$env:SystemDrive\temp\getSEP_installLOG.ps1"
+
 #安裝財產申報系統-所長、副所長、會計主任、政風主任、總務科長
-$Pdis_PC=@("TND-HEAD-150","TND-DEPUTY-014","TND-ACOF-060","TND-GEOF-131","TND-GASE-041")
+<#$Pdis_PC=@("TND-HEAD-150","TND-DEPUTY-014","TND-ACOF-060","TND-GEOF-131","TND-GASE-041")
 if($Pdis_PC.Contains($env:computername)){
     powershell  "$env:SystemDrive\temp\Pdis.ps1"
-}
+}#>
 #更新SEP版本至14.3.558.0000
 $Sep_Registry = "HKLM:\software\wow6432node\symantec\symantec endpoint protection\smc"
 $Sep_NeedReboot_Registry = 'HKLM:\\SOFTWARE\Symantec\Symantec Endpoint Protection\SMC\RebootMgr'
 if(((Get-ItemProperty -Path $Sep_Registry).ProductVersion -ne '14.3.558.0000') -and (!(Test-Path -Path  $Sep_NeedReboot_Registry))){
     powershell "$env:SystemDrive\temp\SEP_AutoUpdate.ps1"
 }
-#檢查UAC有沒有開啟，沒開啟開啟。
+#檢查UAC有沒有開啟，沒開啟則開啟。
 if((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA -eq 0){
     Set-ItemProperty -Path REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name EnableLUA -Value 1
+}
+
+#進行WindowsUpdate
+    #如果沒有PSWindowsUpdate模組則安裝
+    if((Get-Module -ListAvailable -Name PSWindowsUpdate) -eq $null){
+        $PSWindowsUpdate_Path = "\\172.29.205.114\loginscript\PSWindowsUpdate"
+        $PSModule_Path = "$Env:ProgramFiles\WindowsPowerShell\Modules\PSWindowsUpdate"    
+        robocopy $PSWindowsUpdate_Path $PSModule_Path "/e /XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+        Import-Module PSWindowsUpdate             
+    }
+    $LogPath = "\\172.29.205.114\Public\sources\audit\WSUS"
+    $temp = "$env:SystemDrive\temp"
+    $ServiceID_WindowsUpdate = (Get-WUServiceManager | Where-Object{$_.Name -like "Windows Update"}).ServiceID
+    $ServiceID_WSUS = (Get-WUServiceManager | Where-Object{$_.Name -like "Windows Server Update Service"}).ServiceID
+    #$PSWUSettings = @{SmtpServer="smtp.moj.gov.tw";From="tndi@mail.moj.gov.tw";To="kyoiron@mail.moj.gov.tw";Port=25}
+    start-job -ScriptBlock {    
+        Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot  -ServiceID $ServiceID_WSUS -Verbose *>&1 | Out-File "$env:SystemDrive\temp\${env:computername}_WindowsUpdate.txt" -Force -Append
+    }
+    Get-WUHistory | Out-File "$temp\${env:computername}_WindowsUpdate_History.txt" -Force
+    Robocopy $temp $LogPath "${env:computername}_WindowsUpdate.txt" "${env:computername}_WindowsUpdate_History.txt" "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null
+
+
+if($env:COMPUTERNAME -eq "TND-HEAD-150"){
+    $Bitlocker_Status = (manage-bde -status d:)
+    if($Bitlocker_Status[8] -like "*已完全加密"){
+        manage-bde -off d:
+    }else{
+       $Bitlocker_Status | Out-file $env:systemdrive\temp\"${env:COMPUTERNAME}_bitlockerStatus.txt" 
+       $LogPattern="${env:Computername}"+"_bitlockerStatus.txt"      
+       if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" "\\172.29.205.114\Public\sources\audit\BitlockerStatus" $LogPattern /XO /NJH /NJS /NDL /NC /NS | Out-Null}
+    }
 }

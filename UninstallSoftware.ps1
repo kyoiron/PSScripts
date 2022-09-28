@@ -13,7 +13,7 @@ foreach($Path in $RegUninstallPaths){
 }
 Remove-PSDrive -Name HKU
 
-$BlackList_Software_DisplayName = Get-Content -Path $SoftwareDisallowList_Path
+$BlackList_Software_DisplayName = Get-Content -Path $SoftwareDisallowList_Path -Encoding UTF8
 if($null -ne $BlackList_Software_DisplayName){
     $UninstallSoftwares = @()
     $UninstallSoftwares = $Softwares | Where-Object {$_.displayName | Select-String $BlackList_Software_DisplayName }    

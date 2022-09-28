@@ -3,9 +3,10 @@ $EmailPOP3UserName = 'tnd6033'
 $EmailAccountName = "$EmailPOP3UserName@mail.moj.gov.tw"
 $EmailDisplayName = "蔡麗娟"
 $EmailAddress = $EmailAccountName
+$PRFfile_Templates = "\\172.29.205.114\Public\sources\Outlook設定\Templates.PRF"
 $defaultOutlookFolder = "D:\Outlook"
-
 #將Outlook預設之pst存檔位置改到D:\Outlook
+if(Test-Path(D:\Outlook)){New-Item -Path "d:\" -name Outlook -ItemType "directory"}
 #Outlook版本號
 #Outlook 2007:12.0
 #Outlook 2010:14.0
@@ -27,7 +28,7 @@ if (-Not(Test-Path d:\Outlook)){
 
 #取的PRF的範本檔並將修改參數
 #手動改為：Templates.PRF用記事本打開後，修改第53、56、57、59行
-$PRFfile = ((((Get-Content -Path \\172.29.205.114\Public\sources\Outlook設定\Templates.PRF -Encoding Unknown) -replace '%AccountName%' ,"$EmailAccountName") -replace '%POP3UserName%' ,"$EmailPOP3UserName") -replace '%EmailAddress%' , "$EmailAddress") -replace '%DisplayName%' , "$EmailDisplayName" -replace "%PSTFileFolder%",$defaultOutlookFolder
+$PRFfile = ((((Get-Content -Path $PRFfile_Templates  -Encoding Unknown) -replace '%AccountName%' ,"$EmailAccountName") -replace '%POP3UserName%' ,"$EmailPOP3UserName") -replace '%EmailAddress%' , "$EmailAddress") -replace '%DisplayName%' , "$EmailDisplayName" -replace "%PSTFileFolder%",$defaultOutlookFolder
 $TXTPRFfile = "$env:TEMP\${EmailPOP3UserName}_PRFfile.prf"
 Set-Content -Path $TXTPRFfile -Value $PRFfile
 #檢查現在電腦有沒有執行Outlook，如果有，必須先關掉才可以執行設定動作
