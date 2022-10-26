@@ -172,5 +172,5 @@ if($Java_64_Lastest_installed){
 $Log_Folder_Path = $Log_Path +"\"+ "Java"
 if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
 $LogPattern="${env:Computername}_"+"Java"+"*.txt"
-if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern /XO /NJH /NJS /NDL /NC /NS }
+if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null }
 

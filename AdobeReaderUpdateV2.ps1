@@ -91,7 +91,7 @@ $Install_IF_NOT_Installed = $true
 $MSP = Get-ChildItem -Path ($AdobeReader_EXE_Folder+"\*.msp") | Sort-Object  -Property Name -Descending | Select-Object -first 1
 $MSP64 = Get-ChildItem -Path ($AdobeReader64_EXE_Folder+"\*.msp") | Sort-Object  -Property Name -Descending | Select-Object -first 1
 $AcroRead_MSI = Get-MsiInformation -Path ($AdobeReader_EXE_Folder+"\AcroRead.msi") 
-$AcroRead64_MSI = Get-MsiInformation -Path ($AdobeReader64_EXE_Folder+"\AcroPro.msi") 
+$AcroRead64_MSI = Get-MsiInformation -Path ($AdobeReader64_EXE_Folder+"\AcroPro.msi")
 
 <#
     Get-MsiInformation  AcroRead.msi檔結果
@@ -230,17 +230,28 @@ if($MSP -and $AcroRead_MSI -and $MSP64 -and $AcroRead64_MSI){
                 start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden
                 if(Test-Path -Path "$env:systemdrive\temp\$Uninstall_LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
             }
-        }                        
+        }
+        robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null          
+        $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""    
+        unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
+        start-process "msiexec" -arg $arguments -Wait    
+        if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
+        if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null}                        
     }else{
-    #沒安裝Adobe Acrobat Reader DC - Chinese Traditional的狀況----在檢查有無安裝64bit版
+        #沒安裝Adobe Acrobat Reader DC - Chinese Traditional的狀況----在檢查有無安裝64bit版
         if(!$AdobeReader64_installed){            
             #沒安裝64bit版的狀況---安裝Adobe Acrobat Reader DC - Chinese Traditional
             robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" "AcroRead.msi" "abcpy.ini" "Data1.cab" "setup.exe" "setup.ini"  "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
             $AcroRead_MSI_Path = "$env:systemdrive\temp\AcroRead.msi"
-            $Setup_Content = Get-Content -Path "$env:systemdrive\temp\setup.ini"
+            $Setup_Content = Get-Content -Path "$env:systemdrive\temp\setup.ini"            
+            $MSP_Version_String = $MSP.BaseName.TrimStart("AcroRdrDCUpd")
+            $MSP_Version = $MSP_Version_String.Substring(0,2)+"."+ $MSP_Version_String.Substring(2,3)+"."+$MSP_Version_String.Substring(5,5)
+            $AcroRead_MSI_info  = (Get-MsiInformation -path "\\172.29.205.114\loginscript\Update\AdobeReader\AcroRead.msi")
+            $LogName = $env:Computername + "_"+ $AcroRead_MSI_info.ProductName +"_"+ $MSP_Version + ".txt" 
+            $Log_Folder_Path = $Log_Path +"\"+ $AcroRead_MSI_info.ProductName  
             if($Setup_Content -match 'PATCH=AcroRdrDCUpd') {
                 ($Setup_Content -replace ($Setup_Content -match 'PATCH=AcroRdrDCUpd') , ("PATCH="+ $MSP.Name) ) | Set-Content  "$env:systemdrive\temp\setup.ini"  
-            } 
+            }
             robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
             $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""    
             unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
@@ -257,7 +268,7 @@ if($MSP -and $AcroRead_MSI -and $MSP64 -and $AcroRead64_MSI){
             if((Test-Path ($AdobeReader64_installed.InstallSource+"AcroPro.msi")) -and ($AdobeReader64_installed.VersionMajor -eq ([version]$MSP64_Version).Major)){
                 $AcroRead64_MSI_Path = $AdobeReader64_installed.InstallSource+"AcroPro.msi"
             }else{
-                robocopy $AdobeReader64_EXE_Folder "$env:systemdrive\temp" "AcroPro.msi" "abcpy.ini" "Core.cab" "Languages.cab" "setup.exe" "setup.ini" "WindowsInstaller-KB893803-v2-x86.exe" "Transforms" "VCRT_x64" /XO /NJH /NJS /NDL /NC /NS
+                robocopy $AdobeReader64_EXE_Folder "$env:systemdrive\temp" "AcroPro.msi" "abcpy.ini" "Core.cab" "Languages.cab" "setup.exe" "setup.ini" "WindowsInstaller-KB893803-v2-x86.exe" "Transforms" "VCRT_x64" "/XO /NJH /NJS /NDL /NC /NS".Split(' ') 
                 $AcroRead64_MSI_Path = "$env:systemdrive\temp\AcroPro.msi"
                 $Setup64_Content = Get-Content -Path "$env:systemdrive\temp\setup.ini"
                 if($Setup64_Content -match 'PATCH=AcroRdrDCx64Upd') {

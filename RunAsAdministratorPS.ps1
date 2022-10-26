@@ -3,7 +3,10 @@ Add-LocalGroupMember -Group "Administrators" -Member "$env:COMPUTERNAME\tnduser"
 #將tnduser加入本機管理者帳號
 net user "tndadmin" /active:yes
 Get-LocalUser -Name tnduser | Select-Object * | Out-File $env:SystemDrive\temp\${env:computername}_tnduserStatus.txt
-if(test-path("$env:SystemDrive\temp\tnduserStatus.txt")){Copy-Item "$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt" -Destination  "\\172.29.205.114\Public\sources\audit\tudnser" -Force}
+if(test-path("$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt")){Copy-Item "$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt" -Destination  "\\172.29.205.114\Public\sources\audit\tnduser" -Force}
+
+#防毒更新病毒碼及政策
+    cmd /c "start smc -updateconfig"
 #更改tnduser密碼
 <#
 if($env:COMPUTERNAME -eq "TND-5EES-068" ){
@@ -44,16 +47,18 @@ if($Sign_officer_Computers.Contains($env:computername)){
 
 #HiCOS更新
     #不更新Hicos的電腦名稱
-    $NotUpdateHicos_ComputerName=@("TND-GASE-089")    
+    $NotUpdateHicos_ComputerName=@()    
     if(!$NotUpdateHicos_ComputerName.Contains($env:computername)){
         powershell  "$env:SystemDrive\temp\HiCOS_Update.ps1"        
     }
 #Chrome更新
     powershell "$env:SystemDrive\temp\ChromeUpdate.ps1"
 #Adobe Reader更新
-    powershell "$env:SystemDrive\temp\AdobeReaderUpdate.ps1"
+    powershell "$env:SystemDrive\temp\AdobeReaderUpdateV2.ps1"
 #Java更新
     powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
+#7zip更新
+    powershell "$env:SystemDrive\temp\7zipUpdateV3.ps1"
 #經費結報系統元件GeasBatchsign更新
     powershell "$env:SystemDrive\temp\GeasBatchsign.ps1" 
 #MariaDB ODBC Driver 64-bit更新
@@ -82,6 +87,7 @@ if($Sign_officer_Computers.Contains($env:computername)){
     powershell "$env:SystemDrive\temp\UninstallSoftware.ps1" 
 
 #異地辦公室個人電腦匯入印表機設定
+<#
 $DormPC = @("TND-RMSE-047","TND-DEPUTY-151","TND-ACOF-040","TND-PEOF-031","TND-SASE-173","TND-SEOF-152","TND-GASE-055","TND-GASE-088","TND-GASE-044","TND-PEOF-030","TND-SASE-155","TND-BUSE-159","TND-GASE-045","TND-STOF-113","TND-ACOF-040","TND-ACOF-032","TND-5EES-068","TND-STOF-119")
 $DormRemovePrinter = @("Kyocera ECOSYS P3050dn KX 【25號宿舍】","Kyocera ECOSYS P5025cdn KX 【20號宿舍】","Kyocera ECOSYS P3050dn KX 【19號宿舍】")
 
@@ -89,12 +95,13 @@ if($DormPC.Contains($env:computername)){
     (Get-printer).Name | Where-Object{ $DormRemovePrinter  -Contains $_} | where-object{ Remove-Printer -name $_ }
     powershell "$env:SystemDrive\temp\DormPrinterImport.ps1" 
 }
+#>
 
 #指定電腦（們）匯入特定電腦的印表機封裝檔
 #要匯入的電腦
-$InstallPrinterPC=@()
+$InstallPrinterPC=@("TND-ARCH-081")
 #指定哪個電腦的匯出當匯入範本
-$ImportFromeComputername = ""
+$ImportFromeComputername = "TND-ARCH-082"
 if($InstallPrinterPC.Contains($env:computername)){
     $PrinterExportFileLocation = "\\172.29.205.114\mig\Printer"
     $File_Name = $ImportFromeComputername +"x64.printerExport"
@@ -147,6 +154,7 @@ if((Get-ScheduledTaskInfo -TaskName "PCinspection" -ErrorAction Ignore).LastTask
 }
 #>
 #$Rebuid_EICSignTSR_PC=@("TND-BUSE-072")
+
 $Rebuid_EICSignTSR_PC=@()
 if($Rebuid_EICSignTSR_PC.Contains($env:computername)){   
     get-item -Path "$env:PUBLIC\EICSignTSR\EicSignTSR.ini"
@@ -219,12 +227,15 @@ if($SET_GetLOG_PC.Contains($env:computername)){
 if($Pdis_PC.Contains($env:computername)){
     powershell  "$env:SystemDrive\temp\Pdis.ps1"
 }#>
+
 #更新SEP版本至14.3.558.0000
+<#
 $Sep_Registry = "HKLM:\software\wow6432node\symantec\symantec endpoint protection\smc"
 $Sep_NeedReboot_Registry = 'HKLM:\\SOFTWARE\Symantec\Symantec Endpoint Protection\SMC\RebootMgr'
 if(((Get-ItemProperty -Path $Sep_Registry).ProductVersion -ne '14.3.558.0000') -and (!(Test-Path -Path  $Sep_NeedReboot_Registry))){
     powershell "$env:SystemDrive\temp\SEP_AutoUpdate.ps1"
 }
+#>
 #檢查UAC有沒有開啟，沒開啟則開啟。
 if((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System).EnableLUA -eq 0){
     Set-ItemProperty -Path REGISTRY::HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Policies\System -Name EnableLUA -Value 1
@@ -249,6 +260,17 @@ if((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Sy
     Get-WUHistory | Out-File "$temp\${env:computername}_WindowsUpdate_History.txt" -Force
     Robocopy $temp $LogPath "${env:computername}_WindowsUpdate.txt" "${env:computername}_WindowsUpdate_History.txt" "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null
 
+#Windows 7的話則安裝WMF5.1
+$BuildVersion = [System.Environment]::OSVersion.Version
+if($BuildVersion.Major -lt '10'){       
+    Robocopy "\\172.29.205.114\loginscript\Update\Win7-KB3191566-x86" "$env:SystemDrive\temp" "Win7-KB3191566-x86.msu" "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null
+    Robocopy "\\172.29.205.114\loginscript\Update\Win7-KB3191566-x86" "$env:SystemDrive\temp" "Install-WMF5.1.ps1" "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null
+    powershell "$env:SystemDrive\temp\Install-WMF5.1.ps1" | out-file "$env:SystemDrive\temp\${env:computername}_WMF5.1_Log.txt"
+    if("$env:SystemDrive\temp\${env:computername}_WMF5.1_Log.txt"){
+        robocopy "$env:systemdrive\temp" "\\172.29.205.114\Public\sources\audit\WMF5.1\" "$env:SystemDrive\temp\${env:computername}_WMF5.1_Log.txt" "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+        #Copy-Item -Path "$env:SystemDrive\temp\${env:computername}_WMF5.1_Log.txt" -Destination "\\172.29.205.114\Public\sources\audit\WMF5.1\"
+    }
+}
 
 if($env:COMPUTERNAME -eq "TND-HEAD-150"){
     $Bitlocker_Status = (manage-bde -status d:)
@@ -257,6 +279,6 @@ if($env:COMPUTERNAME -eq "TND-HEAD-150"){
     }else{
        $Bitlocker_Status | Out-file $env:systemdrive\temp\"${env:COMPUTERNAME}_bitlockerStatus.txt" 
        $LogPattern="${env:Computername}"+"_bitlockerStatus.txt"      
-       if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" "\\172.29.205.114\Public\sources\audit\BitlockerStatus" $LogPattern /XO /NJH /NJS /NDL /NC /NS | Out-Null}
+       if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" "\\172.29.205.114\Public\sources\audit\BitlockerStatus" $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
     }
 }

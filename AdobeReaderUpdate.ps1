@@ -219,14 +219,17 @@ if($MSP -and $AcroRead_MSI){
         robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" "AcroRead.msi" "abcpy.ini" "Data1.cab" "setup.exe" "setup.ini"  /XO /NJH /NJS /NDL /NC /NS
         $AcroRead_MSI_Path = "$env:systemdrive\temp\AcroRead.msi"
         $Setup_Content = Get-Content -Path "$env:systemdrive\temp\setup.ini"
+        $AcroRead_MSI.ProductName = (Get-MsiInformation -Path $AcroRead_MSI_Path).ProductName        
         if($Setup_Content -match 'PATCH=AcroRdrDCUpd') {
             ($Setup_Content -replace ($Setup_Content -match 'PATCH=AcroRdrDCUpd') , ("PATCH="+ $MSP.Name) ) | Set-Content  "$env:systemdrive\temp\setup.ini"  
-        }       
+        } 
+        $LogName = $env:Computername + "_"+ $AcroRead_MSI.ProductName +"_"+ $MSP_Version + ".txt"        
     }
-    robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name /XO /NJH /NJS /NDL /NC /NS        
+   
+    robocopy $AdobeReader_EXE_Folder "$env:systemdrive\temp" $MSP.Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null          
     $arguments = "/i $AcroRead_MSI_Path /update "+ $env:systemdrive+"\temp\" + $MSP.Name +" /qn /norestart /log ""$env:systemdrive\temp\$LogName"""    
     unblock-file ($env:systemdrive+"\temp\" + $MSP.Name)
     start-process "msiexec" -arg $arguments -Wait    
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-    if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName /XO /NJH /NJS /NDL /NC /NS}
+    if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null}
 }
