@@ -86,6 +86,9 @@ if($Sign_officer_Computers.Contains($env:computername)){
 #刪除不要的軟體
     powershell "$env:SystemDrive\temp\UninstallSoftware.ps1" 
 
+#安裝VANs軟體
+     powershell "$env:SystemDrive\temp\WM7AssetCluster.ps1" 
+
 #異地辦公室個人電腦匯入印表機設定
 <#
 $DormPC = @("TND-RMSE-047","TND-DEPUTY-151","TND-ACOF-040","TND-PEOF-031","TND-SASE-173","TND-SEOF-152","TND-GASE-055","TND-GASE-088","TND-GASE-044","TND-PEOF-030","TND-SASE-155","TND-BUSE-159","TND-GASE-045","TND-STOF-113","TND-ACOF-040","TND-ACOF-032","TND-5EES-068","TND-STOF-119")
@@ -97,11 +100,13 @@ if($DormPC.Contains($env:computername)){
 }
 #>
 
+
 #指定電腦（們）匯入特定電腦的印表機封裝檔
 #要匯入的電腦
-$InstallPrinterPC=@("TND-ARCH-081")
+#$InstallPrinterPC=@("TND-SASE-016","TND-SASE-089","TND-SASE-091","TND-SASE-095","TND-SASE-102","TND-SASE-107")
+$InstallPrinterPC=@()
 #指定哪個電腦的匯出當匯入範本
-$ImportFromeComputername = "TND-ARCH-082"
+$ImportFromeComputername = "TND-STOF-113"
 if($InstallPrinterPC.Contains($env:computername)){
     $PrinterExportFileLocation = "\\172.29.205.114\mig\Printer"
     $File_Name = $ImportFromeComputername +"x64.printerExport"
@@ -113,7 +118,7 @@ if($InstallPrinterPC.Contains($env:computername)){
         Get-printer | ForEach-Object{Set-Printer $_.Name -PermissionSDDL ((Get-Printer -Name 'Microsoft Print to PDF' -full).PermissionSDDL)}
         Remove-Item $tempFile -Force
         remove-item -Path ($PrinterExportFileLocation+"\"+$env:computername+"x64.printerExport") -Force
-        #powershell "$env:SystemDrive\temp\SpecificPrintersImport.ps1" 
+        #powershell "$env:SystemDrive\temp\SpecificPrintersImport.ps1"
     }
 }
 

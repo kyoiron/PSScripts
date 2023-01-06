@@ -157,7 +157,7 @@ if($Java_32_Lastest_installed){
     foreach($exe32 in $Java_32_installeds){
         if([version]$exe32.DisplayVersion -eq [version]$Java_32_Lastest_installed.DisplayVersion){continue}
         $uninstall = ($exe32.UninstallString  -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X","").Trim()
-        $LogFile = $env:systemdrive+"\temp\" + $env:Computername + "_"+ $exe32.DisplayName+"_"+ $Javas_EXE_32_ProductVersion + ".txt"
+        $LogFile = $env:systemdrive+"\temp\" + $env:Computername + "_"+ $exe32.DisplayName+"_"+ $Javas_EXE_32_ProductVersion + "_Remove.txt"
         start-process "msiexec.exe" -arg "/X $uninstall /quiet /passive /norestart /log ""$LogFile""" -Wait -WindowStyle Hidden        
     }
 }
@@ -165,7 +165,7 @@ if($Java_64_Lastest_installed){
     foreach($exe64 in $Java_64_installeds){
         if([version]$exe64.DisplayVersion -eq [version]$Java_64_Lastest_installed.DisplayVersion){continue}
         $uninstall = ($exe64.UninstallString  -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X","").Trim()
-        $LogFile = $env:systemdrive+"\temp\"+$env:Computername + "_"+ $exe64.DisplayName+"_"+ $Javas_EXE_64_ProductVersion + ".txt"
+        $LogFile = $env:systemdrive+"\temp\"+$env:Computername + "_"+ $exe64.DisplayName+"_"+ $Javas_EXE_64_ProductVersion + "_Remove.txt"
         start-process "msiexec.exe" -arg "/X $uninstall /quiet /passive /norestart /log ""$LogFile """ -Wait -WindowStyle Hidden        
     }
 }
