@@ -44,8 +44,8 @@
 #下載程式
     #機關名稱，請參考網址：http://download.moj/files/工具檔案/T5/所屬PC/    
     #下載檔名
-    $ThreatSonar_zip_FileName =  "ThreatSonar_$Name-PC.zip"  
-    $url_exe = "http://download.moj/files/工具檔案/T5/所屬PC/$ThreatSonar_zip_FileName"
+    $ThreatSonar_zip_FileName =  "ThreatSonar1110429.zip"  
+    $url_exe = "http://download.moj/files/T5/TPM/Pc/$ThreatSonar_zip_FileName"
     #檔案下載
     Start-Job -Name WebReq -ScriptBlock { param($p1, $p2)
         Invoke-WebRequest -Uri $p1 -OutFile "$env:systemdrive\temp\$p2"

@@ -89,6 +89,12 @@ if($Sign_officer_Computers.Contains($env:computername)){
 #安裝VANs軟體
      powershell "$env:SystemDrive\temp\WM7AssetCluster.ps1" 
 
+#安裝新版軟體FileZilla
+     powershell "$env:SystemDrive\temp\FileZillaUpdate.ps1" 
+
+#安裝新版軟體XnView
+     powershell "$env:SystemDrive\temp\XnViewUpdate.ps1" 
+
 #異地辦公室個人電腦匯入印表機設定
 <#
 $DormPC = @("TND-RMSE-047","TND-DEPUTY-151","TND-ACOF-040","TND-PEOF-031","TND-SASE-173","TND-SEOF-152","TND-GASE-055","TND-GASE-088","TND-GASE-044","TND-PEOF-030","TND-SASE-155","TND-BUSE-159","TND-GASE-045","TND-STOF-113","TND-ACOF-040","TND-ACOF-032","TND-5EES-068","TND-STOF-119")

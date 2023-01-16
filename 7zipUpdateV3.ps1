@@ -1,4 +1,5 @@
-﻿function Get-MsiInformation
+﻿$RemoveFirstPC=@("TND-GASE-085")
+function Get-MsiInformation
 {
     [CmdletBinding(SupportsShouldProcess=$true, 
                     PositionalBinding=$false,
@@ -85,6 +86,8 @@ $Log_Path = "\\172.29.205.114\Public\sources\audit"
 $MSI_Folder="\\172.29.205.114\loginscript\Update\7zip"
 #沒裝的是否要裝$true或$false
 $Install_IF_NOT_Installed = $true
+#強迫安裝
+$foreInstall = $false
 #依作業系統版本選擇相對應的安裝檔（32bit或64bit）
 if([System.Environment]::Is64BitOperatingSystem){
     $MSI =  Get-MsiInformation -Path (Get-ChildItem -Path ($MSI_Folder+"\*-x64.msi") | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1).fullname
@@ -137,11 +140,35 @@ if($MSI){
         PSChildName         : {23170F69-40C1-2702-1900-000001000000}
         PSDrive             : HKLM
         PSProvider          : Microsoft.PowerShell.Core\Registry
-    #>
-    $installed = $installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
-    if(($installed -eq $null) -and ($Install_IF_NOT_Installed -ne $true)){exit}
+    #>  
+    if(($installed -eq $null) -and ($Install_IF_NOT_Installed -ne $true)){exit}  
+    if(($installeds.Count -gt 1) -or $RemoveFirstPC.Contains($env:Computername)){
+        $installeds | ForEach-Object{
+            #$_.UninstallString.trim()
+            #$uninstall = $_.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
+            #$uninstall = $uninstall.Trim()                
+            #start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden
+            $Log_Folder_Path =  $Log_Path +"\"+ $_.DisplayName
+            $Uninstall_LogName = $env:Computername + "_"+ $_.DisplayName +"_Remove" + ".txt" 
+            if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}             
+            if($_.UninstallString -match "msiexec.exe"){
+                $uninstall = $_.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
+                $uninstall = $uninstall.Trim()                
+                start-process "msiexec.exe" -arg "/X $uninstall /qn /log ""$env:systemdrive\temp\$Uninstall_LogName""" -Wait -WindowStyle Hidden                                                                 
+            }elseif($_.UninstallString -notmatch "/S" ){
+                $uninstall = $_.UninstallString.Trim()             
+                start-process -FilePath $uninstall -ArgumentList " /S"  -Wait -WindowStyle Hidden 
+                "加入參數/S，嘗試移除：" + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"  
+            }
+            if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null} 
+            $foreInstall = $true
+        }
+    }        
+    $installed = $installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1    
     if($MSI){
-        if(([version]$MSI.ProductVersion -le [version]$installed.DisplayVersion)){exit}
+        if($foreInstall -ne $true){
+            if(([version]$MSI.ProductVersion -le [version]$installed.DisplayVersion)){exit}
+        }
         $LogName = $env:Computername + "_"+$MSI.ProductName +"_"+$MSI.ProductVersion + ".txt"
         $MSI_fileName = (Get-Item $MSI.File).Name
         $arguments = "/i $env:systemdrive\temp\$MSI_fileName ALLUSERS=1 /qn /log ""$env:systemdrive\temp\" +  $LogName+""""
