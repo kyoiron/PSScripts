@@ -2,7 +2,7 @@
 $XnViews_Path = "\\172.29.205.114\loginscript\Update\XnView"
 $Log_Path = "\\172.29.205.114\Public\sources\audit"
 $XnView_EXE = (Get-ChildItem -Path ($XnViews_Path+"\*.exe") | Where-Object{$_.VersionInfo.ProductName.trim() -eq "XnView"} | Sort-Object)
-
+$Force_Install = $false
 #EXE安裝檔命令列參數請至https://jrsoftware.org/ishelp/index.php?topic=setupcmdline
 <#
     FileVersionRaw     : 2.51.1.0
@@ -77,11 +77,11 @@ if($XnView_EXE_Path){
             $XnView_installeds = Get-ItemProperty $Path | Where-Object{$_.DisplayName -eq ($XnView_EXE_ProductName+" "+$_.DisplayVersion)} #| ForEach-Object{ Uninstall-MSI ($($_.UninstallString))}
         }
     }
-    if($XnView_installeds){
+    if($XnView_installeds -or $Force_Install){
         if($RemoveFirstPC.Contains($env:Computername) -or (($XnView_installeds|Measure-Object).count -ge 2)){
             foreach($item in $XnView_installeds){
                 $uninstall_Char = ($item.UninstallString -split "  ")
-                $LogFile= "$env:systemdrive\temp\"+$env:Computername + "_XnView_Uninstall_"+ $item.DisplayVersion + ".txt"
+                $LogFile= "$env:systemdrive\temp\"+$env:Computername +"_"+ $item.DisplayName.Replace($item.DisplayVersion,"").trim() +"_Uninstall_"+ $item.DisplayVersion + ".txt"
                 if(test-path $LogFile){
                     $StartDate=(GET-DATE)
                     $EndDate=(Get-ItemProperty -Path $LogFile).LastWriteTime
@@ -92,20 +92,21 @@ if($XnView_EXE_Path){
                     $NEED_Remove = $true
                 }
                 if( $NEED_Remove -or ($diff_Value -gt $diff_day)){
-                    $arguments = " /VERYSILENT /NORESTART /LOG=" + $LogFile
-                  start-process $uninstall_Char[0] -arg $arguments -Wait -WindowStyle Hidden                    
+                    $arguments = " /VERYSILENT /NORESTART /LOG=""" + $LogFile  + """"
+                    start-process $uninstall_Char[0] -arg $arguments -Wait -WindowStyle Hidden   
+                    $Force_Install = $true                 
                 }
              }
-            $Log_Folder_Path = $Log_Path +"\"+ $XnView_EXE_Path
+            $Log_Folder_Path = $Log_Path +"\"+ $XnView_EXE_ProductName
             $LogPattern =$env:Computername + "_"+$XnView_EXE_ProductName+"_*.txt"
             if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
             if(Test-Path -Path $LogFile){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
         }
 
         $XnView_installed = $XnView_installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
-        if([version]$XnView_installed.DisplayVersion -ge [version]$XnView_EXE_ProductVersion){exit}        
-        $LogName = $env:Computername + "_"+$XnView_EXE_ProductName+"_"+ $XnView_EXE_ProductVersion + ".txt"
-        $arguments = " /VERYSILENT /NORESTART /LOG=$env:systemdrive\temp\$LogName"
+        if(([version]$XnView_installed.DisplayVersion -ge [version]$XnView_EXE_ProductVersion) -and ($Force_Install -ne $true)){exit}       
+        $LogName = $env:Computername + "_" + $XnView_EXE_ProductName + "_" + $XnView_EXE_ProductVersion + ".txt"
+        $arguments = " /VERYSILENT /NORESTART /LOG=$env:systemdrive\temp\""$LogName"""
         robocopy $XnViews_Path "$env:systemdrive\temp" $XnView_EXE.Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
         unblock-file ($env:systemdrive+"\temp\"+$XnView_EXE.Name)
         start-process ($env:systemdrive+"\temp\"+$XnView_EXE.Name) -arg $arguments -WindowStyle Hidden 

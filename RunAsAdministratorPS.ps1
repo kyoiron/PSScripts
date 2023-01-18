@@ -94,6 +94,8 @@ if($Sign_officer_Computers.Contains($env:computername)){
 
 #安裝新版軟體XnView
      powershell "$env:SystemDrive\temp\XnViewUpdate.ps1" 
+#安裝新版軟體K-LiteMegaCodecPack
+     powershell "$env:SystemDrive\temp\K-LiteMegaCodecPackUpdate.ps1" 
 
 #異地辦公室個人電腦匯入印表機設定
 <#

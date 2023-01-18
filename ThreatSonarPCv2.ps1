@@ -17,6 +17,8 @@
                 $Unzip_EXE = $null
             }            
         }
+    #「排程上次執行結果」中，不需要重裝排程狀況
+    $NoNeedResetTask = @("作業成功完成.","排程尚未執行")
 #檢查是否有安裝舊版
     if((test-Path "$ThreatSonar_Path\TS_scan.bat") -or ((Get-ScheduledTask -TaskName "ThreatSonar").actions.Execute -ne "$ThreatSonar_Path\ThreatSonar.exe")){
         #1.刪除舊版程式    
@@ -44,16 +46,15 @@
 #下載程式
     #機關名稱，請參考網址：http://download.moj/files/工具檔案/T5/所屬PC/    
     #下載檔名
-    $ThreatSonar_zip_FileName =  "ThreatSonar1110429.zip"  
-    $url_exe = "http://download.moj/files/T5/TPM/Pc/$ThreatSonar_zip_FileName"
+    $ThreatSonar_zip_FileName =  "ThreatSonar_$Name-PC.zip"  
+    $url_exe = "http://download.moj/files/工具檔案/T5/所屬PC/$ThreatSonar_zip_FileName"
     #檔案下載
     Start-Job -Name WebReq -ScriptBlock { param($p1, $p2)
         Invoke-WebRequest -Uri $p1 -OutFile "$env:systemdrive\temp\$p2"
     } -ArgumentList $url_exe,$ThreatSonar_zip_FileName
 
     Wait-Job -Name WebReq -Force
-    Remove-Job -Name WebReq -Force
-
+    Remove-Job -Name WebReq -Force   
     #如果下載成功，與安裝程式進行判斷，如有變動則使用下載版的程式
     $TEMP_Folder = "$env:systemdrive\temp"  
     if(Test-Path "$TEMP_Folder\$ThreatSonar_zip_FileName"){
@@ -75,7 +76,10 @@
         #比對下載檔案跟本機檔案
             $FileDownload_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$TEMP_Folder\$_")).FullName) -Algorithm SHA256).hash}
             $PCFile_Hash = $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$ThreatSonar_Path\$_")).FullName) -Algorithm SHA256).hash}
-            if((!$PCFile_Hash) -or !(@(Compare-Object $FileDownload_Hash $PCFile_Hash -sync 0).Length -eq 0)){
+            if(test-path -Path "$TEMP_Folder\${env:COMPUTERNAME}_ThreatSonar_Check.txt"){
+               $LastResultText = ((Get-Content -Path "$TEMP_Folder\${env:COMPUTERNAME}_ThreatSonar_Check.txt" | Select-String -Pattern "排程上次執行結果：") -replace "排程上次執行結果：").ToString().Trim()               
+            }
+            if((!$PCFile_Hash) -or !(@(Compare-Object $FileDownload_Hash $PCFile_Hash -sync 0).Length -eq 0) -or(!$NoNeedResetTask.Contains($LastResultText))){
                 #將新檔案替換舊檔
                 $FilesInDownloadZip | ForEach-Object { Move-Item -Path "$TEMP_Folder\$_"  -Destination $ThreatSonar_Path -Force}
                 #刪除壓縮檔清單以外的檔案

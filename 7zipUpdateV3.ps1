@@ -1,4 +1,4 @@
-﻿$RemoveFirstPC=@("TND-GASE-085")
+﻿$RemoveFirstPC=@()
 function Get-MsiInformation
 {
     [CmdletBinding(SupportsShouldProcess=$true, 
