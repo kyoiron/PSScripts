@@ -4,6 +4,12 @@ Add-LocalGroupMember -Group "Administrators" -Member "$env:COMPUTERNAME\tnduser"
 net user "tndadmin" /active:yes
 Get-LocalUser -Name tnduser | Select-Object * | Out-File $env:SystemDrive\temp\${env:computername}_tnduserStatus.txt
 if(test-path("$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt")){Copy-Item "$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt" -Destination  "\\172.29.205.114\Public\sources\audit\tnduser" -Force}
+#解鎖Bitlocker槽
+$BitlockerRecoveryKey='102157-408870-455730-463155-149358-296956-700711-045573'
+if ($env:BitlockerDataDrive -ne $null){
+    manage-bde -unlock $env:BitlockerDataDrive -RecoveryPassword $BitlockerRecoveryKey
+    #manage-bde -off $env:BitlockerDataDrive
+}
 
 #防毒更新病毒碼及政策
     cmd /c "start smc -updateconfig"
@@ -284,7 +290,7 @@ if($BuildVersion.Major -lt '10'){
         #Copy-Item -Path "$env:SystemDrive\temp\${env:computername}_WMF5.1_Log.txt" -Destination "\\172.29.205.114\Public\sources\audit\WMF5.1\"
     }
 }
-
+<#
 if($env:COMPUTERNAME -eq "TND-HEAD-150"){
     $Bitlocker_Status = (manage-bde -status d:)
     if($Bitlocker_Status[8] -like "*已完全加密"){
@@ -295,3 +301,4 @@ if($env:COMPUTERNAME -eq "TND-HEAD-150"){
        if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" "\\172.29.205.114\Public\sources\audit\BitlockerStatus" $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
     }
 }
+#>

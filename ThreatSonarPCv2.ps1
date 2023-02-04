@@ -81,7 +81,11 @@
             }
             if((!$PCFile_Hash) -or !(@(Compare-Object $FileDownload_Hash $PCFile_Hash -sync 0).Length -eq 0) -or(!$NoNeedResetTask.Contains($LastResultText))){
                 #將新檔案替換舊檔
-                $FilesInDownloadZip | ForEach-Object { Move-Item -Path "$TEMP_Folder\$_"  -Destination $ThreatSonar_Path -Force}
+                $FilesInDownloadZip | ForEach-Object { 
+                    #如果正在執行，則強迫關閉程式。
+                    Stop-Process -Name ThreatSonar -ErrorAction SilentlyContinue -Force
+                    Move-Item -Path "$TEMP_Folder\$_"  -Destination $ThreatSonar_Path -Force
+                }
                 #刪除壓縮檔清單以外的檔案
                 Get-ChildItem -Path $ThreatSonar_Path -File -Recurse | Where-Object {$FilesInDownloadZip -notcontains $_.Name} | Remove-Item -Force
                 #建立（或重建）排程
