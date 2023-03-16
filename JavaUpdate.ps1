@@ -1,6 +1,7 @@
 ﻿#java不更新清單
 #$JavaExcludePC=@("TND-GASE-061")
-$JavaExcludePC=@("TND-GASE-061")
+$JavaExcludePC=@()
+
 if($JavaExcludePC.Contains($env:Computername)){exit}
 $Javas_EXE_Path = "\\172.29.205.114\loginscript\Update\Java"
 $Log_Path = "\\172.29.205.114\Public\sources\audit"

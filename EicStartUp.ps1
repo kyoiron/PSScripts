@@ -8,6 +8,8 @@ $User_StartUp_Print_lnk =  $User_StartUp +"\筆硯簽章工具.lnk"
 
 $EICSignTSR_lnk = "$env:PUBLIC\Desktop\筆硯列印工具.lnk"
 $EicPrint_lnk = "$env:PUBLIC\Desktop\筆硯簽章工具.lnk"
+if(Test-Path -Path $Computer_StartUp_EICSignTSR_lnk){Remove-Item -Path $Computer_StartUp_EICSignTSR_lnk -Force}
+if(Test-Path -Path $Computer_StartUp_Print_lnk){Remove-Item -Path $Computer_StartUp_Print_lnk -Force}
 
 if((Test-Path -Path $EICSignTSR_lnk) -and  (!(Test-Path -Path $User_StartUp_EICSignTSR_lnk))){
     Copy-Item  $EICSignTSR_lnk -Destination $User_StartUp

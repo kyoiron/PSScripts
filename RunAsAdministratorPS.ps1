@@ -6,10 +6,19 @@ Get-LocalUser -Name tnduser | Select-Object * | Out-File $env:SystemDrive\temp\$
 if(test-path("$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt")){Copy-Item "$env:SystemDrive\temp\${env:computername}_tnduserStatus.txt" -Destination  "\\172.29.205.114\Public\sources\audit\tnduser" -Force}
 #解鎖Bitlocker槽
 $BitlockerRecoveryKey='102157-408870-455730-463155-149358-296956-700711-045573'
-if ($env:BitlockerDataDrive -ne $null){
+#$DontUnlockPrinterPC = @("TND-ICPSC-051","TND-ICPSC-052","TND-ICPSC-053")
+if($env:BitlockerDataDrive -ne $null){
     manage-bde -unlock $env:BitlockerDataDrive -RecoveryPassword $BitlockerRecoveryKey
     #manage-bde -off $env:BitlockerDataDrive
 }
+<#
+$unNAS_ShortCut_PC = @("TND-ICPSC-051","TND-ICPSC-052","TND-ICPSC-053")
+if($unNAS_ShortCut_PC.Contains($env:computername)){
+    if(Test-Path -Path ("$env:USERPROFILE\Desktop\網路硬碟(172.29.205.114).lnk")){
+        Remove-Item -Path "$env:USERPROFILE\Desktop\網路硬碟(172.29.205.114).lnk" -Force
+    }
+}
+#>
 
 #防毒更新病毒碼及政策
     cmd /c "start smc -updateconfig"
@@ -103,6 +112,9 @@ if($Sign_officer_Computers.Contains($env:computername)){
 #安裝新版軟體K-LiteMegaCodecPack
      powershell "$env:SystemDrive\temp\K-LiteMegaCodecPackUpdate.ps1" 
 
+#安裝新版軟體PDF-Xchange Editor 
+     powershell "$env:SystemDrive\temp\PDFXChangeEditoruUpdate.ps1" 
+
 #異地辦公室個人電腦匯入印表機設定
 <#
 $DormPC = @("TND-RMSE-047","TND-DEPUTY-151","TND-ACOF-040","TND-PEOF-031","TND-SASE-173","TND-SEOF-152","TND-GASE-055","TND-GASE-088","TND-GASE-044","TND-PEOF-030","TND-SASE-155","TND-BUSE-159","TND-GASE-045","TND-STOF-113","TND-ACOF-040","TND-ACOF-032","TND-5EES-068","TND-STOF-119")
@@ -118,9 +130,10 @@ if($DormPC.Contains($env:computername)){
 #指定電腦（們）匯入特定電腦的印表機封裝檔
 #要匯入的電腦
 #$InstallPrinterPC=@("TND-SASE-016","TND-SASE-089","TND-SASE-091","TND-SASE-095","TND-SASE-102","TND-SASE-107")
-$InstallPrinterPC=@()
+#$InstallPrinterPC=@("TND-STOF-136")
+$InstallPrinterPC=@("")
 #指定哪個電腦的匯出當匯入範本
-$ImportFromeComputername = "TND-STOF-113"
+$ImportFromeComputername = "TND-3EES-084"
 if($InstallPrinterPC.Contains($env:computername)){
     $PrinterExportFileLocation = "\\172.29.205.114\mig\Printer"
     $File_Name = $ImportFromeComputername +"x64.printerExport"

@@ -108,7 +108,7 @@ if($MSI){
     $installeds = @()
     foreach ($Path in $RegUninstallPaths) {
         if (Test-Path $Path) {
-            $installeds += Get-ItemProperty $Path | Where-Object{$_.displayname -match $MSI.ProductName } #| ForEach-Object{ Uninstall-MSI ($($_.UninstallString))}
+            $installeds += Get-ItemProperty $Path | Where-Object{($_.displayname -match $MSI.ProductName)} #| ForEach-Object{ Uninstall-MSI ($($_.UninstallString))}
         }
     }
     <#
