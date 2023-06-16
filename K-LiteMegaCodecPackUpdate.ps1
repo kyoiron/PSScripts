@@ -90,7 +90,7 @@ if($KLiteMegaCodecPack_EXE_Path){
     $RegUninstallPaths = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*')
     foreach ($Path in $RegUninstallPaths) {
         if (Test-Path $Path) {
-            $KLiteCodecPack_installeds = Get-ItemProperty $Path | Where-Object{($_.DisplayName -eq ($KLiteMegaCodecPack_EXE_ProductName+" "+$_.DisplayVersion)) -or ($_.DisplayName -like "K-Lite Codec Pack*" )} 
+            $KLiteCodecPack_installeds += Get-ItemProperty $Path | Where-Object{($_.DisplayName -eq ($KLiteMegaCodecPack_EXE_ProductName+" "+$_.DisplayVersion)) -or ($_.DisplayName -like "K-Lite Codec Pack*" )} 
         }
     }
     if($KLiteCodecPack_installeds -or $Force_Install){

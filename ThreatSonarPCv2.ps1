@@ -56,11 +56,16 @@
     Wait-Job -Name WebReq -Force
     Remove-Job -Name WebReq -Force   
     #如果下載成功，與安裝程式進行判斷，如有變動則使用下載版的程式
-    $TEMP_Folder = "$env:systemdrive\temp"  
+    $TEMP_Folder = "$env:systemdrive\temp"
+    $UnZipTEMP_Folder = "$env:systemdrive\temp\ThreatSonar"
+
     if(Test-Path "$TEMP_Folder\$ThreatSonar_zip_FileName"){
         #資料夾不存在則建立
         if(!(Test-Path  $ThreatSonar_Path)){           
            New-Item -Path "$env:systemdrive\ThreatSonar" -ItemType "directory" -Force
+        }
+        if(!(Test-Path  $UnZipTEMP_Folder)){           
+           New-Item -Path $UnZipTEMP_Folder -ItemType "directory" -Force
         }
         #取得下載壓縮檔內的檔案清單
             [Reflection.Assembly]::LoadWithPartialName('System.IO.Compression.FileSystem')
@@ -68,23 +73,32 @@
         #解壓縮下載檔案至暫存資料夾
             if($Unzip_EXE){
                 #使用7zip解壓縮
-                &$Unzip_EXE x "$TEMP_Folder\$ThreatSonar_zip_FileName" "-o$TEMP_Folder" -y
+                &$Unzip_EXE x "$TEMP_Folder\$ThreatSonar_zip_FileName" "-o$UnZipTEMP_Folder" -y
             }else{
                 #使用Powershell之解壓縮命令
-                Expand-Archive -Path "$TEMP_Folder\$ThreatSonar_zip_FileName" -DestinationPath $TEMP_Folder -Force
+                Expand-Archive -Path "$TEMP_Folder\$ThreatSonar_zip_FileName" -DestinationPath $UnZipTEMP_Folder -Force
             }
+        #等待解壓縮完成
+            $count = 0
+            while ((Get-ChildItem $UnZipTEMP_Folder -File -Recurse | Measure-Object).Count -ne $FilesInDownloadZip.count) {                
+                Start-Sleep -Seconds 0.1
+                $count+=1
+                if($count -eq 60){exit}
+            }            
         #比對下載檔案跟本機檔案
-            $FileDownload_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$TEMP_Folder\$_")).FullName) -Algorithm SHA256).hash}
+            $FileDownload_Hash =  $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$UnZipTEMP_Folder\$_")).FullName) -Algorithm SHA256).hash}
             $PCFile_Hash = $FilesInDownloadZip | ForEach-Object {(Get-FileHash( (Get-ChildItem -Path ("$ThreatSonar_Path\$_")).FullName) -Algorithm SHA256).hash}
             if(test-path -Path "$TEMP_Folder\${env:COMPUTERNAME}_ThreatSonar_Check.txt"){
                $LastResultText = ((Get-Content -Path "$TEMP_Folder\${env:COMPUTERNAME}_ThreatSonar_Check.txt" | Select-String -Pattern "排程上次執行結果：") -replace "排程上次執行結果：").ToString().Trim()               
             }
-            if((!$PCFile_Hash) -or !(@(Compare-Object $FileDownload_Hash $PCFile_Hash -sync 0).Length -eq 0) -or(!$NoNeedResetTask.Contains($LastResultText))){
+            #Log檔中，如果最近LOG最後一行字串無包含"[info] Complete scanning"或者該字串為7天以前資料則重新安裝。
+            $NeedReinstall = (!((Get-Content -Path "$env:allusersprofile\Task\sonar.log" | Select-Object -Last 1).Contains("[info] Complete scanning"))) -or  (New-TimeSpan  ([datetime]::ParseExact((Get-Content -Path "$env:allusersprofile\Task\sonar.log" | Select-Object -Last 1).Substring(0, 19),"yyyy-MM-dd HH:mm:ss",$null)) (Get-Date)) -lt 7            
+            if((!$PCFile_Hash) -or !(@(Compare-Object $FileDownload_Hash $PCFile_Hash -sync 0).Length -eq 0) -or(!$NoNeedResetTask.Contains($LastResultText))-or$NeedReinstall){
                 #將新檔案替換舊檔
                 $FilesInDownloadZip | ForEach-Object { 
                     #如果正在執行，則強迫關閉程式。
                     Stop-Process -Name ThreatSonar -ErrorAction SilentlyContinue -Force
-                    Move-Item -Path "$TEMP_Folder\$_"  -Destination $ThreatSonar_Path -Force
+                    Move-Item -Path "$UnZipTEMP_Folder\$_"  -Destination $ThreatSonar_Path -Force
                 }
                 #刪除壓縮檔清單以外的檔案
                 Get-ChildItem -Path $ThreatSonar_Path -File -Recurse | Where-Object {$FilesInDownloadZip -notcontains $_.Name} | Remove-Item -Force
@@ -92,7 +106,9 @@
                 schtasks /Delete /TN "ThreatSonar" /F                 
                 schtasks /Create /TN ThreatSonar /RU SYSTEM /SC DAILY /RL HIGHEST /TR "$ThreatSonar_Path\ThreatSonar.exe" /ST $Specific_Time /F
             }else{
-                $FilesInDownloadZip | ForEach-Object {Remove-Item "$TEMP_Folder\$_" -Force}
+                #$FilesInDownloadZip | ForEach-Object {Remove-Item "$UnZipTEMP_Folder\$_" -Force}
+                Remove-Item -Path $UnZipTEMP_Folder -Recurse -Force
+                
             }
         #釋放ZIP檔
         Start-Job -Name ZipClose -ScriptBlock { param($p1)        

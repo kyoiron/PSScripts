@@ -19,7 +19,8 @@ if($unNAS_ShortCut_PC.Contains($env:computername)){
     }
 }
 #>
-
+$ChkSrv = Get-Process -Name ChkSrv -ErrorAction SilentlyContinue
+if((!$ChkSrv) -and (Test-Path -Path ${env:ProgramFiles(x86)}\HiPKILocalSignServer\ChkSrv.exe)){Start-Process -FilePath "${env:ProgramFiles(x86)}\HiPKILocalSignServer\ChkSrv.exe"}
 #防毒更新病毒碼及政策
     cmd /c "start smc -updateconfig"
 #更改tnduser密碼
@@ -62,6 +63,8 @@ if($Sign_officer_Computers.Contains($env:computername)){
 
 #HiCOS更新
     #不更新Hicos的電腦名稱
+
+    #powershell  "$env:SystemDrive\temp\HiCOS_Remove.ps1"    
     $NotUpdateHicos_ComputerName=@()    
     if(!$NotUpdateHicos_ComputerName.Contains($env:computername)){
         powershell  "$env:SystemDrive\temp\HiCOS_Update.ps1"        
@@ -72,6 +75,14 @@ if($Sign_officer_Computers.Contains($env:computername)){
     powershell "$env:SystemDrive\temp\AdobeReaderUpdateV2.ps1"
 #Java更新
     powershell "$env:SystemDrive\temp\JavaUpdate.ps1"
+
+#修復7zip1900版無法移除問題
+    <#
+    $Repair_7zip1900_PC = @("TND-GCSE-080","TND-1EES-083")    
+    if($Repair_7zip1900_PC.Contains($env:COMPUTERNAME)){
+        powershell "$env:SystemDrive\temp\7zip1900_Remove.ps1"
+    }
+    #>
 #7zip更新
     powershell "$env:SystemDrive\temp\7zipUpdateV3.ps1"
 #經費結報系統元件GeasBatchsign更新
@@ -95,25 +106,32 @@ if($Sign_officer_Computers.Contains($env:computername)){
     powershell "$env:SystemDrive\temp\ThreatSonarPCv2.ps1"
 #印表機更名：將中括號[,]替換成【】，因為中括號容易造成字串字元判斷困難
     Get-printer |Where-Object{$_.Name -like  ("*"+[regex]::escape(']'))} |Where-Object{ Rename-Printer -name $_.Name -NewName ((($_.Name -replace  [regex]::escape('['),'【') -replace  [regex]::escape(']'),'】'))}
-
-#PC基本資料蒐集
-    powershell "$env:SystemDrive\temp\PCChecker.ps1" 
-#刪除不要的軟體
-    powershell "$env:SystemDrive\temp\UninstallSoftware.ps1" 
-
 #安裝VANs軟體
-     powershell "$env:SystemDrive\temp\WM7AssetCluster.ps1" 
-
+    powershell "$env:SystemDrive\temp\WM7AssetCluster.ps1"
 #安裝新版軟體FileZilla
-     powershell "$env:SystemDrive\temp\FileZillaUpdate.ps1" 
-
+    powershell "$env:SystemDrive\temp\FileZillaUpdate.ps1"
 #安裝新版軟體XnView
-     powershell "$env:SystemDrive\temp\XnViewUpdate.ps1" 
+    powershell "$env:SystemDrive\temp\XnViewUpdate.ps1"
 #安裝新版軟體K-LiteMegaCodecPack
-     powershell "$env:SystemDrive\temp\K-LiteMegaCodecPackUpdate.ps1" 
-
+    powershell "$env:SystemDrive\temp\K-LiteMegaCodecPackUpdate.ps1"
 #安裝新版軟體PDF-Xchange Editor 
-     powershell "$env:SystemDrive\temp\PDFXChangeEditoruUpdate.ps1" 
+    powershell "$env:SystemDrive\temp\PDFXChangeEditorUpdate.ps1" 
+#刪除不要的軟體
+    powershell "$env:SystemDrive\temp\UninstallSoftware.ps1"
+#PC基本資料蒐集
+    powershell "$env:SystemDrive\temp\PCChecker.ps1"
+#檢查嘸蝦米輸入法安裝狀況
+    powershell "$env:SystemDrive\temp\CheckBoshiamyTIP.ps1" 
+#檢查自然輸入法安裝狀況
+    powershell "$env:SystemDrive\temp\CheckGoing.ps1"
+#檢查電腦板LINE安裝狀況
+    powershell "$env:SystemDrive\temp\CheckLINE.ps1"
+#檢查JDK安裝狀況
+    if($env:computername -eq "TND-PEOF-015"){ 
+        if(Test-Path -Path "$env:SystemDrive\temp\JDKUpdate.ps1"){     
+            powershell "$env:SystemDrive\temp\JDKUpdate.ps1"
+        }
+    }
 
 #異地辦公室個人電腦匯入印表機設定
 <#
@@ -227,6 +245,9 @@ if($env:computername -eq "TND-PEOF-015"){
     powershell "$env:SystemDrive\temp\Card.ps1"
 }
 #>
+
+
+
 #印表機備份程式
     powershell  "$env:SystemDrive\temp\PrinterBackup.ps1"
 #印表機權限
@@ -287,7 +308,7 @@ if((Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Sy
     $ServiceID_WSUS = (Get-WUServiceManager | Where-Object{$_.Name -like "Windows Server Update Service"}).ServiceID
     #$PSWUSettings = @{SmtpServer="smtp.moj.gov.tw";From="tndi@mail.moj.gov.tw";To="kyoiron@mail.moj.gov.tw";Port=25}
     start-job -ScriptBlock {    
-        Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot  -ServiceID $ServiceID_WSUS -Verbose *>&1 | Out-File "$env:SystemDrive\temp\${env:computername}_WindowsUpdate.txt" -Force -Append
+        Get-WindowsUpdate -AcceptAll -Install -IgnoreReboot  -ServiceID $ServiceID_WSUS -Verbose *>&1 | Out-File "$env:SystemDrive\temp\${env:computername}_WindowsUpdate.txt" -Force -Append        
     }
     Get-WUHistory | Out-File "$temp\${env:computername}_WindowsUpdate_History.txt" -Force
     Robocopy $temp $LogPath "${env:computername}_WindowsUpdate.txt" "${env:computername}_WindowsUpdate_History.txt" "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null
@@ -303,6 +324,35 @@ if($BuildVersion.Major -lt '10'){
         #Copy-Item -Path "$env:SystemDrive\temp\${env:computername}_WMF5.1_Log.txt" -Destination "\\172.29.205.114\Public\sources\audit\WMF5.1\"
     }
 }
+
+<#
+#112年矯正署資安健檢
+$ccScan_PC =@("*")
+$ccScan_Path = "\\172.29.205.114\loginscript\Update\ccScan"
+$ccScan_Log_Path = "\\172.29.205.114\Public\sources\audit\ccScan"
+$ccScan_FileName = "ccScan_TND_PC.exe"
+if($ccScan_PC.Contains($env:computername) -or $ccScan_PC.Contains("*")){
+    if(!(test-path -path  "$env:systemdrive\temp\corecloud")){
+        
+        if(!(test-path -path "$env:systemdrive\temp\$ccScan_FileName")){
+            Robocopy $ccScan_Path "$env:SystemDrive\temp" $ccScan_FileName "/XO /NJH /NJS /NDL /NC /NS".Split(' ')| Out-Null
+            unblock-file ($env:systemdrive+"\temp\"+$ccScan_FileName)
+
+        }
+        Start-Process "$env:systemdrive\temp\$ccScan_FileName"
+    }else{
+        if((Get-ChildItem -Path "$env:SystemDrive\temp\corecloud" -Force | Measure-Object).Count -eq 0){
+            if(!(Test-Path -Path $ccScan_Log_Path)){New-Item -ItemType Directory -Path $ccScan_Log_Path -Force}
+            $env:computername +"存在corecloud空資料夾，曾經執行過ccScan" | Out-File  ("$env:systemdrive\temp\" + $env:computername +"_ccScan_Log.txt")
+            if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $ccScan_Log_Path ($env:computername +"_ccScan_Log.txt") "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
+
+        }else{
+            #如果corecloud非空代表上一次未完成掃描，強制將資料夾移除以便下一次重開機後掃描。
+            Remove-Item -Path "$env:SystemDrive\temp\corecloud" -Force
+        }
+    }
+}
+#>
 <#
 if($env:COMPUTERNAME -eq "TND-HEAD-150"){
     $Bitlocker_Status = (manage-bde -status d:)

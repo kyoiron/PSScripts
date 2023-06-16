@@ -101,7 +101,7 @@ if($HiCOS_EXE_Path){
     $arguments = " /quiet /norestart /log $env:systemdrive\temp\$LogName"
     robocopy $HiCOSs_Path "$env:systemdrive\temp" $HiCOS_EXE.Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
     unblock-file ($env:systemdrive+"\temp\"+$HiCOS_EXE.Name)
-    start-process ($env:systemdrive+"\temp\"+$HiCOS_EXE.Name) -arg $arguments -WindowStyle Hidden 
+    start-process ($env:systemdrive+"\temp\"+$HiCOS_EXE.Name) -arg $arguments  -WindowStyle Hidden
     Start-Sleep -s 15
     $Log_Folder_Path = $Log_Path +"\"+ $HiCOS_EXE_ProductName
     $LogPattern =$env:Computername + "_HiCOS_*.txt"

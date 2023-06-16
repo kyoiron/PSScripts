@@ -1,26 +1,6 @@
-﻿Televzr
-Google Endpoint Verification
-光影魔术手
-爛芞踱
-Haali Media Splitter
-qemit.com Toolbar
-Haali Media Splitter
-iSkysoft PDF Converter
-PDF-Viewer
-Intel® PROSet/Wireless WiFi Software
-Intel® PROSet/無線軟體
-Microsoft Visual C++ 2005 Redistributable
-Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729
-Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.17
+﻿Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.6161
 Microsoft Visual C++ 2008 Redistributable - x64 9.0.30729.6161
-Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729
-Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.17
-Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.4148
-Microsoft Visual C++ 2008 Redistributable - x86 9.0.30729.6161
+Microsoft Visual C++ 2010 x86 Redistributable - 10.0.30319
+Microsoft Visual C++ 2010 x64 Redistributable - 10.0.40219
 Microsoft Visual C++ 2010  x64 Redistributable - 10.0.30319
-Microsoft Visual C++ 2010  x64 Redistributable - 10.0.40219
-Microsoft Visual C++ 2010  x86 Redistributable - 10.0.30319
-Microsoft Visual C++ 2010  x86 Redistributable - 10.0.40219
-Microsoft Visual C++ 2012 Redistributable (x64) - 11.0.61030
-Microsoft Visual C++ 2012 Redistributable (x86) - 11.0.61030
-Microsoft ASP.NET MVC 2
+Microsoft Visual C++ 2010  x86 Redistributable - 10.0.40319

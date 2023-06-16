@@ -39,7 +39,7 @@ if($null -ne $BlackList_Software_DisplayName){
             }elseif($_.UninstallString -notmatch "/S" ){
                 $uninstall = $_.UninstallString.Trim()             
                 start-process -FilePath $uninstall -ArgumentList " /S"  -Wait -WindowStyle Hidden 
-                "加入參數/S，嘗試移除：" + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"  
+                "加入靜默參數/S，嘗試移除：" + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"  
             }
             else{
                 

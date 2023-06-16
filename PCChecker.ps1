@@ -16,7 +16,7 @@
         $MariaDB_User = "tnduser"
         $MariaDB_PW = "me@TND1234"
         $ODBC_Connector_Path = "\\172.29.205.114\loginscript\Update\mariadb-connector-odbc"
-        $ODBC_Connector_File_Prefx = "mariadb-connector-odbc-3.1.10-"
+        $ODBC_Connector_File_Prefx = "mariadb-connector-odbc-3.1.18-"
     #不列出軟體清單（即白名單），備註須與displayname一模一樣之字串。
         #$WhilteList_Software_DisplayName=@("")
     #Email參數
@@ -118,7 +118,7 @@
     "Database = $MariaDB_DBName;" +
     "UID = $MariaDB_User;" +
     "PWD= $MariaDB_PW;" +
-    "Option = 3"
+    "Option=3"
     #如果沒有MariaDB ODBC之Driver，則安裝
     if([string]::IsNullOrEmpty(($Softwares.displayname -like "MariaDB ODBC Driver*"))){
         if([System.Environment]::Is64BitOperatingSystem){
@@ -142,7 +142,9 @@
     #$DataTable = New-Object -TypeName System.Data.DataTable
     $command = $SqlConnection.CreateCommand()
     $command.CommandText = $Insert_PC_Info
+    $command.Prepare()
     $results = $command.ExecuteReader()
+    $command.Dispose()
     #$DataTable.Load($results)
     $results.Close()
     $Insert_Software_Installed_Table_Multiple='INSERT INTO `PC_Software_Installed`(`ComputerName`, `DisplayName`, `Publisher`, `InstallDate`, `DisplayVersion`, `Architecture`) VALUES '
@@ -177,15 +179,19 @@
                 #$command.CommandText = $Insert_Software_Installed        
             }
         }
-
+$command = $SqlConnection.CreateCommand()
 $command.CommandText = $Insert_Software_Installed_Table_Multiple.TrimEnd(',') + " ON DUPLICATE KEY UPDATE `Publisher`=VALUES(`Publisher`) ,`InstallDate`=VALUES(`InstallDate`),`DisplayVersion`=VALUES(`DisplayVersion`) ,`Architecture`=VALUES(`Architecture`) "
 #$command.CommandText.ToString() | Export-Csv -Path c:\users\kyoiron\desktop\test.csv -Encoding Unicode -NoTypeInformation
+$command.Prepare()
 $results_insert = $command.ExecuteReader()
+$command.Dispose()
 $results_insert.Close()
 
-
+$command = $SqlConnection.CreateCommand()
 $command.CommandText = $Insert_Software_Info_Table_Multiple.TrimEnd(',') + ' ON DUPLICATE KEY UPDATE `Publisher`=VALUES(`Publisher`) ,`DisplayVersion`=VALUES(`DisplayVersion`) '
+$command.Prepare()
 $results_insert = $command.ExecuteReader()
+$command.Dispose()
 $results_insert.Close()
 
 

@@ -6,7 +6,8 @@ $FileZillas_Path = "\\172.29.205.114\loginscript\Update\FileZilla"
 #沒裝的是否要裝$true或$false
 $Install_IF_NOT_Installed = $false
 
-$FileZilla_EXE = (Get-ChildItem -Path ($FileZillas_Path+"\*.exe") | Where-Object{$_.VersionInfo.FileDescription -eq "FileZilla FTP Client"} | Sort-Object)
+$FileZilla_EXE = (Get-ChildItem -Path ($FileZillas_Path+"\*.exe") | Where-Object{$_.VersionInfo.FileDescription -eq "FileZilla FTP Client"} | Sort-Object )  | Sort-Object -Property VersionInfo.FileVersion -Descending | Select-Object -last 1
+
 $FileZilla_EXE_Path = $FileZilla_EXE.FullName
 
 if($FileZilla_EXE_Path){
@@ -55,7 +56,7 @@ if($FileZilla_EXE_Path){
     $RegUninstallPaths = @('HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*','HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*')
     foreach ($Path in $RegUninstallPaths) {
         if (Test-Path $Path) {
-            $FileZilla_installeds = Get-ItemProperty $Path | Where-Object{$_.DisplayName -match $FileZilla_EXE_ProductName} #| ForEach-Object{ Uninstall-MSI ($($_.UninstallString))}
+            $FileZilla_installeds = Get-ItemProperty $Path | Where-Object{$_.PSChildName -match ($FileZilla_EXE_ProductName + " Client")} #| ForEach-Object{ Uninstall-MSI ($($_.UninstallString))}
         }
     }
     <#

@@ -11,7 +11,6 @@ $Global:PatternJava64 = "Java ([0-9]|[0-9][0-9]) Update ([0-9]|[0-9][0-9]|[0-9][
 $RegUninstallPaths = @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*")
 $Javas_EXE_32 = Get-ChildItem -Path ($Javas_EXE_Path+"\*-i586.exe") | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1
 $Javas_EXE_64 = Get-ChildItem -Path ($Javas_EXE_Path+"\*-x64.exe") | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1
-$NeedRestartFontClient = $false
 if($Javas_EXE_32.FullName){
     
     $Javas_EXE_32_ProductName = $Javas_EXE_32.VersionInfo.ProductName
@@ -62,8 +61,6 @@ if($Javas_EXE_32.FullName){
         if([version]$Java_32_Lastest_installed.DisplayVersion -lt [version]$Javas_EXE_32_ProductVersion){
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_32.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
             unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name)
-            $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-            if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name) -arg $arguments -wait
             #在確認已安裝中最新的java版本
             foreach ($Path in $RegUninstallPaths) {
@@ -77,8 +74,6 @@ if($Javas_EXE_32.FullName){
         #無安裝狀況
         robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_32.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
         unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name)
-        $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-        if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
         start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name) -arg $arguments -wait
         #在確認已安裝中最新的java版本
         foreach ($Path in $RegUninstallPaths) {
@@ -102,8 +97,6 @@ if($Javas_EXE_64.FullName){
         if([version]$Java_64_Lastest_installed.DisplayVersion -lt [version]$Javas_EXE_64_ProductVersion){
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_64.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
             unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name)
-            $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-            if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name) -arg $arguments -wait
             #在確認已安裝中最新的java版本
             $Java_64_installeds = Get-ItemProperty $RegUninstallPaths[0] | Where-Object{$_.DisplayName -match $Global:PatternJava64}          
@@ -113,8 +106,6 @@ if($Javas_EXE_64.FullName){
         #無安裝狀況
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_64.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
             unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name)
-            $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-            if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name) -arg $arguments -wait
             #在確認已安裝中最新的java版本
             $Java_64_installeds = Get-ItemProperty $RegUninstallPaths[0] | Where-Object{$_.DisplayName -match $Global:PatternJava64}          
@@ -183,4 +174,4 @@ $Log_Folder_Path = $Log_Path +"\"+ "Java"
 if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
 $LogPattern="${env:Computername}_"+"Java"+"*.txt"
 if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null }
-if($NeedRestartFontClient){Start-Process -FilePath "$env:systemdrive\CMEX_FontClient\AutoUpdate.exe"}            
+
