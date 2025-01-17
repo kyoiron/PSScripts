@@ -92,7 +92,7 @@ if($XnView_EXE_Path){
                     $NEED_Remove = $true
                 }
                 if( $NEED_Remove -or ($diff_Value -gt $diff_day)){
-                    $arguments = " /VERYSILENT /NORESTART /LOG=""" + $LogFile  + """"
+                    $arguments = " /VERYSILENT /NORESTART /ALLUSERS /NOICONS /LOG=""" + $LogFile  + """"
                     start-process $uninstall_Char[0] -arg $arguments -Wait -WindowStyle Hidden   
                     $Force_Install = $true                 
                 }
@@ -106,7 +106,7 @@ if($XnView_EXE_Path){
         $XnView_installed = $XnView_installeds | Sort-Object -Property DisplayVersion -Descending | Select-Object -first 1
         if(([version]$XnView_installed.DisplayVersion -ge [version]$XnView_EXE_ProductVersion) -and ($Force_Install -ne $true)){exit}       
         $LogName = $env:Computername + "_" + $XnView_EXE_ProductName + "_" + $XnView_EXE_ProductVersion + ".txt"
-        $arguments = " /VERYSILENT /NORESTART /LOG=$env:systemdrive\temp\""$LogName"""
+        $arguments = " /VERYSILENT /NORESTART /ALLUSERS /NOICONS /FORCECLOSEAPPLICATIONS /LOGCLOSEAPPLICATIONS /LOG=$env:systemdrive\temp\""$LogName"""
         robocopy $XnViews_Path "$env:systemdrive\temp" $XnView_EXE.Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
         unblock-file ($env:systemdrive+"\temp\"+$XnView_EXE.Name)
         start-process ($env:systemdrive+"\temp\"+$XnView_EXE.Name) -arg $arguments -WindowStyle Hidden 

@@ -9,17 +9,17 @@
 $Log_Path = "\\172.29.205.114\Public\sources\audit"
 $Log_Path_Folder = "$Log_Path\EicSignTSR"
 #更新檔安裝路徑
-$EicSignTSR_EXE_Folder = "\\172.29.205.114\loginscript\Update\EICSignTSR"
+$EicPrintt_EXE_Folder = "\\172.29.205.114\loginscript\Update\EicPrintt"
 #擷取檔案資訊
-$EicSignTSR_EXE_NAS = Get-ChildItem -Path "$EicSignTSR_EXE_Folder\EicSignTSR.exe"
-$EicSignTSR_EXE_PC = Get-ChildItem -Path "$env:SystemDrive\eic\EICSignTSR\EicSignTSR.exe"
+$EicPrintt_EXE_NAS = Get-ChildItem -Path "$EicSignTSR_EXE_Folder\EicPrintt.exe"
+$EicPrintt_EXE_PC = Get-ChildItem -Path "$env:SystemDrive\eic\EicPrint\EicPrint.exe"
 #進行版本比較
-if([version]$EicSignTSR_EXE_PC.VersionInfo.FileVersion -lt [version]$EicSignTSR_EXE_NAS.VersionInfo.FileVersion){ 
+if([version]$EicPrintt_EXE_PC.VersionInfo.FileVersion -lt [version]$EicPrintt_EXE_NAS.VersionInfo.FileVersion){ 
     #檢查是否已經啟動
-    $Restart_EicSignTSR_EXE = Get-Process -Name EicSignTSR -ErrorAction SilentlyContinue
+    $Restart_EicSignTSR_EXE = Get-Process -Name EicPrint -ErrorAction SilentlyContinue
     #如果已經啟動則強制關閉程式
-    while((Get-Process -Name EicSignTSR -ErrorAction SilentlyContinue)|Where-Object {!$_.HasExited}){
-        Stop-Process -Name EicSignTSR -Force -ErrorAction SilentlyContinue
+    while((Get-Process -Name EicPrint -ErrorAction SilentlyContinue)|Where-Object {!$_.HasExited}){
+        Stop-Process -Name EicPrint -Force -ErrorAction SilentlyContinue
     }
     #將舊版本檔案重新命名附加文字old和版本號碼
     Rename-Item -Path $EicSignTSR_EXE_PC -NewName ($EicSignTSR_EXE_PC.BaseName + "_old_"+ $EicSignTSR_EXE_PC.VersionInfo.FileVersion +".exe")

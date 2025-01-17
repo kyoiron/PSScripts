@@ -198,9 +198,15 @@ if($GeasBatchsign_Newest_MSI){
         #if($null -ne $GeasBatchsign_installed){exit}
     #>
     $LogName = $env:Computername + "_"+$GeasBatchsign_Newest_MSI.ProductName +"_"+$GeasBatchsign_Newest_MSI.ProductVersion + ".txt"
-    $GeasBatchsign_MIS_fileName = (Get-Item $GeasBatchsign_Newest_MSI.File).Name
+    $GeasBatchsign_MIS_fileName = Split-Path -Path $GeasBatchsign_Newest_MSI.File -Leaf
     $arguments = "/i $env:systemdrive\temp\$GeasBatchsign_MIS_fileName  /qn /log ""$env:systemdrive\temp\" +  $LogName+""""
     robocopy $GeasBatchsigns_Path "$env:systemdrive\temp" (Get-ChildItem -Path $GeasBatchsign_Newest_MSI.File).Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+    do {
+        $msiexecProcess = Get-Process -Name "msiexec.exe" -ErrorAction SilentlyContinue
+        if ($msiexecProcess -ne $null) {
+            Start-Sleep -Seconds 1
+        }
+    } while ($msiexecProcess -ne $null)
     start-process "msiexec" -arg $arguments -Wait
     $Log_Folder_Path = $Log_Path + "\"+ $GeasBatchsign_Newest_MSI.ProductName
     if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}

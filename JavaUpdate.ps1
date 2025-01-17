@@ -11,9 +11,12 @@ $Global:PatternJava64 = "Java ([0-9]|[0-9][0-9]) Update ([0-9]|[0-9][0-9]|[0-9][
 $RegUninstallPaths = @("HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*","HKLM:\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*")
 $Javas_EXE_32 = Get-ChildItem -Path ($Javas_EXE_Path+"\*-i586.exe") | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1
 $Javas_EXE_64 = Get-ChildItem -Path ($Javas_EXE_Path+"\*-x64.exe") | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1
-$NeedRestartFontClient = $false
-if($Javas_EXE_32.FullName){
-    
+$msiexecProcessName = "msiexec.exe"
+#自造字
+$FontClient_EXE_Path = "$env:systemdrive\CMEX_FontClient\FontClient.exe"
+$FontClient_AutoUpdate_EXE_Path = "$env:systemdrive\CMEX_FontClient\AutoUpdate.exe"
+
+if($Javas_EXE_32.FullName){    
     $Javas_EXE_32_ProductName = $Javas_EXE_32.VersionInfo.ProductName
     $Javas_EXE_32_ProductVersion = $Javas_EXE_32.VersionInfo.ProductVersion
     foreach ($Path in $RegUninstallPaths) {
@@ -56,15 +59,18 @@ if($Javas_EXE_32.FullName){
     }
     $Java_32_Lastest_installed  = $Java_32_installeds | Sort-Object -Property Version -Descending | Select-Object -first 1
     $LogName = $env:Computername + "_"+$Javas_EXE_32_ProductName+"_"+ $Javas_EXE_32_ProductVersion + ".txt"
-    $arguments = "/s REBOOT=0 /LV* ""$env:systemdrive\temp\$LogName"""    
+    $arguments = "/s AUTO_UPDATE=0 REBOOT=0 /LV* ""$env:systemdrive\temp\$LogName"""    
     if($Java_32_Lastest_installed){
         #有安裝狀況---只有安裝exe檔比已經安裝中最新的還要新再裝
         if([version]$Java_32_Lastest_installed.DisplayVersion -lt [version]$Javas_EXE_32_ProductVersion){
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_32.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
             unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name)
             $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-            if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
-            start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name) -arg $arguments -wait
+            if(!$FontClient.HasExited){
+                Stop-Process -Name "FontClient" -Force -ErrorAction SilentlyContinue
+                Wait-Process -Name "FontClient" -ErrorAction SilentlyContinue
+            }
+            start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name) -arg $arguments -Wait
             #在確認已安裝中最新的java版本
             foreach ($Path in $RegUninstallPaths) {
                 if (Test-Path $Path) {
@@ -78,7 +84,10 @@ if($Javas_EXE_32.FullName){
         robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_32.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
         unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name)
         $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-        if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
+        if(!$FontClient.HasExited){
+            Stop-Process -Name "FontClient" -Force
+            Wait-Process -Name "FontClient" -ErrorAction SilentlyContinue
+        }
         start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_32.Name) -arg $arguments -wait
         #在確認已安裝中最新的java版本
         foreach ($Path in $RegUninstallPaths) {
@@ -96,15 +105,24 @@ if($Javas_EXE_64.FullName){
     $Java_64_installeds = Get-ItemProperty $RegUninstallPaths[0] | Where-Object{$_.DisplayName -match $Global:PatternJava64}          
     $Java_64_Lastest_installed  = $Java_64_installeds | Sort-Object -Property Version -Descending | Select-Object -first 1
     $LogName = $env:Computername + "_"+$Javas_EXE_64_ProductName+" (x64)"+"_"+ $Javas_EXE_64_ProductVersion + ".txt"
-    $arguments = "/s REBOOT=0 /LV* ""$env:systemdrive\temp\$LogName"""
+    $arguments = "/s AUTO_UPDATE=0 REBOOT=0 /l*vx ""$env:systemdrive\temp\$LogName"""
     if($Java_64_Lastest_installed){
         #有安裝狀況---只有安裝exe檔比已經安裝中最新的還要新再裝
         if([version]$Java_64_Lastest_installed.DisplayVersion -lt [version]$Javas_EXE_64_ProductVersion){
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_64.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
             unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name)
             $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-            if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
+            if(!$FontClient.HasExited){
+                Stop-Process -Name "FontClient" -Force -ErrorAction SilentlyContinue
+                Wait-Process -Name "FontClient" -ErrorAction SilentlyContinue
+            }
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name) -arg $arguments -wait
+            do {
+                $Javas_EXE_64_Process = Get-Process -Name $Javas_EXE_64.Name -ErrorAction SilentlyContinue
+                if ($Javas_EXE_64_Process -ne $null) {
+                    Start-Sleep -Seconds 1
+                }
+            } while ($Javas_EXE_64_Process -ne $null)
             #在確認已安裝中最新的java版本
             $Java_64_installeds = Get-ItemProperty $RegUninstallPaths[0] | Where-Object{$_.DisplayName -match $Global:PatternJava64}          
             $Java_64_Lastest_installed  = $Java_64_installeds | Sort-Object -Property Version -Descending | Select-Object -first 1 
@@ -114,7 +132,10 @@ if($Javas_EXE_64.FullName){
             robocopy $Javas_EXE_Path "$env:systemdrive\temp" ""$Javas_EXE_64.Name" /PURGE /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null
             unblock-file ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name)
             $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
-            if(!$FontClient.HasExited){Stop-Process -Name "FontClient" -Force;$NeedRestartFontClient = $true}
+            if(!$FontClient.HasExited){
+                Stop-Process -Name "FontClient" -Force -ErrorAction SilentlyContinue
+                Wait-Process -Name "FontClient" -ErrorAction SilentlyContinue
+            }
             start-process ($env:systemdrive+"\temp\"+ $Javas_EXE_64.Name) -arg $arguments -wait
             #在確認已安裝中最新的java版本
             $Java_64_installeds = Get-ItemProperty $RegUninstallPaths[0] | Where-Object{$_.DisplayName -match $Global:PatternJava64}          
@@ -168,7 +189,12 @@ if($Java_32_Lastest_installed){
         if([version]$exe32.DisplayVersion -eq [version]$Java_32_Lastest_installed.DisplayVersion){continue}
         $uninstall = ($exe32.UninstallString  -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X","").Trim()
         $LogFile = $env:systemdrive+"\temp\" + $env:Computername + "_"+ $exe32.DisplayName+"_"+ $Javas_EXE_32_ProductVersion + "_Remove.txt"
-        start-process "msiexec.exe" -arg "/X $uninstall /quiet /passive /norestart /log ""$LogFile""" -Wait -WindowStyle Hidden        
+        $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
+        if(!$FontClient.HasExited){
+            Stop-Process -Name "FontClient" -Force -ErrorAction SilentlyContinue
+            Wait-Process -Name "FontClient" -ErrorAction SilentlyContinue
+        }
+        start-process "msiexec.exe" -arg "/X $uninstall /quiet /l*vx ""$LogFile""" -Wait            
     }
 }
 if($Java_64_Lastest_installed){
@@ -176,11 +202,21 @@ if($Java_64_Lastest_installed){
         if([version]$exe64.DisplayVersion -eq [version]$Java_64_Lastest_installed.DisplayVersion){continue}
         $uninstall = ($exe64.UninstallString  -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X","").Trim()
         $LogFile = $env:systemdrive+"\temp\"+$env:Computername + "_"+ $exe64.DisplayName+"_"+ $Javas_EXE_64_ProductVersion + "_Remove.txt"
-        start-process "msiexec.exe" -arg "/X $uninstall /quiet /passive /norestart /log ""$LogFile """ -Wait -WindowStyle Hidden        
+        $FontClient = Get-Process -Name "FontClient" -ErrorAction SilentlyContinue
+        if(!$FontClient.HasExited){
+            Stop-Process -Name "FontClient" -Force
+            Wait-Process -Name "FontClient" -ErrorAction SilentlyContinue
+        }
+        start-process "msiexec.exe" -arg "/X $uninstall /quiet /l*vx ""$LogFile""" -Wait      
     }
 }
 $Log_Folder_Path = $Log_Path +"\"+ "Java"
 if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
 $LogPattern="${env:Computername}_"+"Java"+"*.txt"
-if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern "/XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null }
-if($NeedRestartFontClient){Start-Process -FilePath "$env:systemdrive\CMEX_FontClient\AutoUpdate.exe"}            
+if(Test-Path -Path "$env:systemdrive\temp"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogPattern " /XO /NJH /NJS /NDL /NC /NS".Split(' ')|Out-Null }
+
+if((Get-Process | Where-Object {$_.MainModule.FileName -eq $FontClient_EXE_Path}) -eq 0){ 
+    Start-Process -FilePath $FontClient_EXE_Path -ArgumentList "-gui"
+    Start-Process -FilePath $FontClient_AutoUpdate_EXE_Path
+}
+          

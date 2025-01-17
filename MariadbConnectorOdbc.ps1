@@ -149,9 +149,15 @@ if($MSI){
     if($MSI){
         if(([version]$MSI.ProductVersion -le [version]$installed.DisplayVersion)){exit}
         $LogName = $env:Computername + "_"+$MSI.ProductName +"_"+$MSI.ProductVersion + ".txt"
-        $MSI_fileName = (Get-Item $MSI.File).Name
-        $arguments = "/i $env:systemdrive\temp\$MSI_fileName ALLUSERS=1 /qn /log ""$env:systemdrive\temp\" +  $LogName+""""
+        $MSI_fileName =  Split-Path -Path  $MSI.File -Leaf
+        $arguments = "/i $env:systemdrive\temp\$MSI_fileName ALLUSERS=1 /quiet /l*vx ""$env:systemdrive\temp\" +  $LogName+""""
         robocopy $MariadbConnectorOdbc_EXE_Folder "$env:systemdrive\temp" (Get-ChildItem -Path $MSI.File).Name "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
+        do {
+                $msiexecProcess = Get-Process -Name "msiexec.exe" -ErrorAction SilentlyContinue
+                if ($msiexecProcess -ne $null) {
+                    Start-Sleep -Seconds 1
+                }
+        } while ($msiexecProcess -ne $null)
         start-process "msiexec" -arg $arguments -Wait
         $Log_Folder_Path = $Log_Path + "\"+ $MSI.ProductName
         if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}

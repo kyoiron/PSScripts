@@ -88,6 +88,6 @@ if($FileZilla_EXE_Path){
     $arguments = "$env:systemdrive\temp\$EXE_FIleName /S user=all"
     robocopy $FileZillas_Path "$env:systemdrive\temp" $EXE_FIleName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
     unblock-file ($env:systemdrive+"\temp\"+$EXE_FIleName)
-    start-process ($env:systemdrive+"\temp\"+$EXE_FIleName) -arg $arguments -WindowStyle Hidden 
+    start-process ($env:systemdrive+"\temp\"+$EXE_FIleName) -arg $arguments -WindowStyle Hidden -Wait
     #安裝指令無log參數故無回傳LOG檔
 }

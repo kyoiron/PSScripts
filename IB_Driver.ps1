@@ -1,5 +1,4 @@
-﻿$RemoveFirstPC=@()
-function Get-MsiInformation
+﻿function Get-MsiInformation
 {
     [CmdletBinding(SupportsShouldProcess=$true, 
                     PositionalBinding=$false,
@@ -83,25 +82,21 @@ function Get-MsiInformation
 #LOG檔NAS存放路徑
 $Log_Path = "\\172.29.205.114\Public\sources\audit"
 #MSI檔安裝路徑
-$MSI_Folder="\\172.29.205.114\loginscript\Update\7zip"
+$MSI_Folder="\\172.29.205.114\loginscript\Update\PIDDLL\IB_Driver_3.9.3"
 #沒裝的是否要裝$true或$false
 $Install_IF_NOT_Installed = $true
 #強迫安裝
 $foreInstall = $false
+$MSI =  Get-MsiInformation -Path (Get-ChildItem -Path "$MSI_Folder\IBScanDriver Setup.msi").FullName
 
 $msiexecProcessName = "msiexec.exe"
-#依作業系統版本選擇相對應的安裝檔（32bit或64bit）
-if([System.Environment]::Is64BitOperatingSystem){
-    $MSI =  Get-MsiInformation -Path (Get-ChildItem -Path ($MSI_Folder+"\*-x64.msi") | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1).fullname
-}else{
-    $MSI =  Get-MsiInformation -Path (Get-ChildItem -Path ($MSI_Folder+"\*.msi") -Exclude "*-x64.msi" | Sort-Object -Property VersionInfo -Descending | Select-Object -first 1).fullname
-}
+
 <#
-    File            : \\172.29.205.114\loginscript\Update\7zip\7z2201-x64.msi
-    ProductCode     : {23170F69-40C1-2702-2201-000001000000}
-    Manufacturer    : Igor Pavlov
-    ProductName     : 7-Zip 22.01 (x64 edition)
-    ProductVersion  : 22.01.00.0
+    File            : \\172.29.205.114\loginscript\Update\PIDDLL\IB_Driver_3.9.3\IBScanDriver Setup.msi
+    ProductCode     : {FC93E3AD-91E9-4EBA-90C5-9DE774480AB1}
+    Manufacturer    : Integrated Biometrics
+    ProductName     : IBScanDriver
+    ProductVersion  : 1.0.1
     ProductLanguage : 1033
 #>
 if($MSI){
@@ -116,35 +111,34 @@ if($MSI){
         AuthorizedCDFPrefix : 
         Comments            : 
         Contact             : 
-        DisplayVersion      : 19.00.00.0
-        HelpLink            : http://www.7-zip.org/support.html
+        DisplayVersion      : 1.0.1
+        HelpLink            : 
         HelpTelephone       : 
-        InstallDate         : 20190807
-        InstallLocation     : 
-        InstallSource       : C:\Users\tndadmin\Downloads\
-        ModifyPath          : MsiExec.exe /I{23170F69-40C1-2702-1900-000001000000}
-        Publisher           : Igor Pavlov
+        InstallDate         : 20230918
+        InstallLocation     : C:\Users\kyoiron\AppData\Roaming\Integrated Biometrics\IBScanDriver\
+        InstallSource       : C:\Users\kyoiron\Desktop\IB_Driver_3.9.3\
+        ModifyPath          : MsiExec.exe /I{FC93E3AD-91E9-4EBA-90C5-9DE774480AB1}
+        Publisher           : Integrated Biometrics
         Readme              : 
         Size                : 
-        EstimatedSize       : 10510
-        UninstallString     : MsiExec.exe /I{23170F69-40C1-2702-1900-000001000000}
-        URLInfoAbout        : http://www.7-zip.org/
-        URLUpdateInfo       : http://www.7-zip.org/download.html
-        VersionMajor        : 19
+        EstimatedSize       : 10112
+        UninstallString     : MsiExec.exe /I{FC93E3AD-91E9-4EBA-90C5-9DE774480AB1}
+        URLInfoAbout        : http://www.IntegratedBiometrics.com
+        URLUpdateInfo       : 
+        VersionMajor        : 1
         VersionMinor        : 0
         WindowsInstaller    : 1
-        Version             : 318767104
+        Version             : 16777217
         Language            : 1033
-        DisplayName         : 7-Zip 19.00 (x64 edition)
-        sEstimatedSize2     : 5255
-        PSPath              : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{23170F69-40C1-2702-1900-000001000000}
-        PSParentPath        : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall
-        PSChildName         : {23170F69-40C1-2702-1900-000001000000}
+        DisplayName         : IBScanDriver
+        PSPath              : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{FC93E3AD-91E9-4EBA-90C5-9DE774480AB1}
+        PSParentPath        : Microsoft.PowerShell.Core\Registry::HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall
+        PSChildName         : {FC93E3AD-91E9-4EBA-90C5-9DE774480AB1}
         PSDrive             : HKLM
         PSProvider          : Microsoft.PowerShell.Core\Registry
     #>  
     if(($installed -eq $null) -and ($Install_IF_NOT_Installed -ne $true)){exit}  
-    if(($installeds.Count -gt 1) -or $RemoveFirstPC.Contains($env:Computername)){
+    if($installeds.Count -gt 1){
         $installeds | ForEach-Object{
             #$_.UninstallString.trim()
             #$uninstall = $_.UninstallString -Replace "msiexec.exe","" -Replace "/I","" -Replace "/X",""
@@ -162,7 +156,7 @@ if($MSI){
                 start-process -FilePath $uninstall -ArgumentList " /S"  -Wait -WindowStyle Hidden 
                 "加入參數/S，嘗試移除：" + $_.DisplayName | Out-File  "$env:systemdrive\temp\$Uninstall_LogName"  
             }
-            if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null} 
+            if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $Uninstall_LogName " /XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null} 
             $foreInstall = $true
         }
     }        
@@ -173,12 +167,15 @@ if($MSI){
         }
         $LogName = $env:Computername + "_"+$MSI.ProductName +"_"+$MSI.ProductVersion + ".txt"
         $MSI_fileName =  Split-Path -Path $MSI.File -Leaf
-        $arguments = "/i $env:systemdrive\temp\$MSI_fileName ALLUSERS=1 /qn /log ""$env:systemdrive\temp\" +  $LogName+""""
-        robocopy $MSI_Folder "$env:systemdrive\temp" $MSI_fileName " /XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null       
+        $MSI_tempFolder = "$env:systemdrive\temp\"+$MSI.ProductName
+        $arguments = "/i ""$MSI_tempFolder\$MSI_fileName"" ALLUSERS=1 /qn /log ""$env:systemdrive\temp\" +  $LogName+""""
+        if(!(Test-Path -Path $MSI_tempFolder)){New-Item -ItemType Directory -Path MSI_tempFloder -Force}
+        robocopy $MSI_Folder $MSI_tempFolder  "/E".Split(' ') | Out-Null        
         start-process "msiexec" -arg $arguments -Wait
         $Log_Folder_Path = $Log_Path + "\"+ $MSI.ProductName
         if(!(Test-Path -Path $Log_Folder_Path)){New-Item -ItemType Directory -Path $Log_Folder_Path -Force}
-        if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName " /XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
+        if(Test-Path -Path "$env:systemdrive\temp\$LogName"){robocopy "$env:systemdrive\temp" $Log_Folder_Path $LogName "/XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null}
+        if(Test-Path -Path $MSI_tempFolder){Remove-Item  -Path $MSI_tempFolder -Recurse -Force}
     }
-
 }
+   

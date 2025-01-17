@@ -80,7 +80,7 @@ function Get-BitlockerRecoveryKey {
 function Execute-UpdateScript {
     param (
         [string]$ScriptPath,
-        [int]$Timeout = 600  # 預設超時時間為310分鐘
+        [int]$Timeout = 180  # 預設超時時間為3分鐘
     )
 
     Write-Log "開始執行更新腳本: $ScriptPath"
@@ -193,13 +193,13 @@ try {
         Write-Log "UAC已處於啟用狀態"
     }
     #筆硯簽章工具及列印工具安裝程式
-        $EicPC_Reinstall_starup=@("")
+        $EicPC_Reinstall_starup=@("TND-BUSE-072")
         if($EicPC_Reinstall_starup -contains $env:COMPUTERNAME){
             Write-Log "進行列印工具重新安裝(啟動區版)"
             & $env:SystemDrive\temp\eic.ps1 -ForceReinstall:$true -InstallNonStartup:$false -InstallScope Both
             Write-Log "完成印工具重新安裝(啟動區版)"
         } 
-        $EicPC_Reinstall_nonstarup=@("")
+        $EicPC_Reinstall_nonstarup=@()
         if($EicPC_Reinstall_nonstarup -contains $env:COMPUTERNAME){
             Write-Log "進行列印工具重新安裝"
             & $env:SystemDrive\temp\eic.ps1 -ForceReinstall:$true -InstallScope EicPrint
@@ -224,9 +224,8 @@ try {
         }
 
     # 重新匯入印表機
-        #$ReImportPrinterPC = @("TND-GASE-*")
-        #if ($ReImportPrinterPC -in $env:COMPUTERNAME) {& "$env:SystemDrive\temp\ReImportPrinter.ps1"}
-        #if ($env:COMPUTERNAME -like $ReImportPrinterPC) {& "$env:SystemDrive\temp\ReImportPrinter.ps1"}
+        $ReImportPrinterPC = @("TND-STOF-113","TND-ARCH-082","TND-ARCH-081","TND-1EES-083","TND-3EES-084","TND-2EES-088","TND-GCSE-034","TND-GCSE-073","TND-ASSE-032","TND-ACOF-040","TND-ACOF-020")
+        if ($ReImportPrinterPC -contains $env:COMPUTERNAME) {& "$env:SystemDrive\temp\ReImportPrinter.ps1"}
     # 印表機更名
     Write-Log "正在更新印表機名稱"
     Get-printer | Where-Object { $_.Name -like ("*" + [regex]::escape(']')) } | 
@@ -259,10 +258,6 @@ try {
         Write-Log "跨平台工具已在運行或未安裝"
     }
 
-    #安裝CDC元件
-    #if($env:computername -eq "TND-SASE-107"){& "$env:SystemDrive\temp\CDCPKI_UpdateV2.ps1"}
-    #if($env:computername -eq "TND-STOF-113"){& "$env:SystemDrive\temp\CDCPKI_UpdateV2.ps1"}
-
     # 列出所有正在運行的程序
     <#
     Write-Log "正在列出所有正在運行的程序"
@@ -274,13 +269,12 @@ try {
     
     # 執行各種更新腳本
     $updateScripts = @(
-        "WM7AssetCluster.ps1"
         "ChromeUpdate.ps1",
         "AdobeReaderUpdateV2.ps1",
         "7zipUpdateV3.ps1",
         "GeasBatchsign.ps1",
         "MariadbConnectorOdbc.ps1",
-        #"ThreatSonarPCv3.ps1",
+        "ThreatSonarPCv3.ps1",
         "WM7AssetCluster.ps1",
         "FileZillaUpdate.ps1",
         "XnViewUpdate.ps1",
@@ -324,7 +318,6 @@ try {
         Write-Log "PSWindowsUpdate模組安裝完成"
     }
 
-    <#
     $LogPath = "$networkBasePath\WSUS"
     $temp = "$env:SystemDrive\temp"
     $ServiceID_WSUS = (Get-WUServiceManager | Where-Object { $_.Name -like "Windows Server Update Service" }).ServiceID
@@ -333,7 +326,6 @@ try {
     Get-WUHistory | Format-Table -AutoSize | Out-File "$temp\${env:computername}_WindowsUpdate_History.txt" -Force
     Robocopy $temp $LogPath "${env:computername}_WindowsUpdate.txt" "${env:computername}_WindowsUpdate_History.txt" " /XO /NJH /NJS /NDL /NC /NS".Split(' ') | Out-Null
     Write-Log "Windows更新歷史紀錄已保存"
-    #>
 
     # 移除Java
     Write-Log "正在執行Java移除腳本"
@@ -350,7 +342,6 @@ try {
     
     # 進行Win1021H2評估
     Write-Log "正在執行Win10_21H2評估及執行升級安裝腳本"
-    #if($env:computername -ne "TND-SASE-107"){ & "$env:SystemDrive\temp\Windows10-2021Upgrade.ps1"}
     & "$env:SystemDrive\temp\Windows10-2021Upgrade.ps1"
     Write-Log "Win10_21H2評估及執行升級安裝腳本執行完成"
     
